@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>DonateConnect</title>
+   
+</head>
+<body>
+    <header id="main-header">
+        <div class="container">
+            <div id="branding">
+                <h1><span class="highlight">Donate</span> Connect</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="admin_login.php">Admin</a></li>
+                    <li><a href="charity_login.php">Charity Organisation</a></li>
+                    <li><a href="donor_login.php">Donor</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="showcase">
+            <div class="showcase-content">
+                <h1>Transform Lives with Your Support</h1>
+                <p>Every action counts. Be the catalyst for positive change in our global community.</p>
+                <a href="register.php" class="cta-button" id="donate-button">Join Us</a>
+               
+            </div>
+        </section>
+
+        <section id="about">
+            <div class="container">
+                <h2>About Us</h2>
+                <p>Donor Connect is a platform dedicated to connecting generous donors with meaningful causes. We
+                    believe in the power of collective action and the impact that each individual can make. Our mission
+                    is to create a world where everyone has the opportunity to contribute to positive change, no matter
+                    how big or small their donation may be.</p>
+            </div>
+        </section>
+
+        <section id="boxes">
+            <div class="container">
+                <div class="box">
+                    <h3>Effortless and Secure Donation Process</h3>
+                    <p>Experience the simplicity of giving with our cutting-edge, user-friendly platform. We've
+                        meticulously designed our donation process to be intuitive and efficient, ensuring that your
+                        generosity can make an impact without any hassle. Browse through a diverse array of worthy
+                        causes, select the one that resonates with your values, and contribute your desired amount—all
+                        accomplished with just a few simple clicks. Our state-of-the-art security measures safeguard
+                        your personal and financial information, allowing you to donate with complete peace of mind.</p>
+                </div>
+                <div class="box">
+                    <h3>Comprehensive and Transparent Impact Tracking</h3>
+                    <p>Witness the transformative power of your contributions through our advanced impact tracking
+                        system. We believe in complete transparency and accountability, which is why we've developed
+                        real-time impact reports that provide you with detailed insights into how your donations are
+                        being utilized. These comprehensive reports offer tangible evidence of the positive changes your
+                        generosity is fostering in communities around the world. From the number of lives touched to the
+                        specific projects funded, you'll have a clear and continual understanding of the meaningful
+                        difference you're making with every donation.</p>
+                </div>
+                <div class="box">
+                    <h3>Customizable and Enriching Giving Experience</h3>
+                    <p>Embark on a personalized philanthropy journey tailored to your unique interests and core values.
+                        Our sophisticated platform allows you to curate your giving experience, ensuring that your
+                        charitable efforts align perfectly with the causes closest to your heart. Set up flexible
+                        recurring donations to provide sustained support to your chosen initiatives, or explore our
+                        regularly updated database of vetted causes to discover new opportunities for making a
+                        difference. Additionally, engage with our vibrant community of like-minded donors, sharing
+                        experiences and insights that can amplify your impact and enrich your giving journey. With our
+                        platform, your philanthropic endeavors become a deeply personal and rewarding experience.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About Us</h3>
+                    <p>Donor Connect is committed to making a positive impact through the power of collective giving.
+                    </p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="donor_login.php" class="become-donor">Become a Donor</a></li>
+                        <li><a href="charity_login.php" class="become-charity">Become a Charity Organisation</a></li>
+                        
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Connect With Us</h3>
+                    <ul>
+                        <li><a href="#"><i class="fab fa-facebook"></i> Facebook</a></li>
+                        <li><a href="#"><i class="fab fa-twitter"></i> Twitter</a></li>
+                        <li><a href="#"><i class="fab fa-instagram"></i> Instagram</a></li>
+                        <li><a href="#"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>DonateConnect &copy; 2024 | All Rights Reserved. Done by DonateConnect</p>
+        </div>
+    </footer>
+
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Contact Us</h2>
+            <p>We'd love to hear from you! Please fill out the form below and we'll get back to you as soon as possible.
+            </p>
+            <form id="contactForm">
+                <div class="form-group">
+                    <label for="name">Your Name:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Your Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Your Message:</label>
+                    <textarea id="message" name="message" required></textarea>
+                </div>
+                <button type="submit" class="cta-button">Send Message</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Header scroll effect
+        window.addEventListener('scroll', function () {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Modal functionality
+        const modal = document.getElementById("contactModal");
+        const contactLink = document.getElementById("contact-link");
+        const footerContactLink = document.getElementById("footer-contact-link");
+        const closeButton = document.getElementsByClassName("close")[0];
+
+        function openModal() {
+            modal.style.display = "block";
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        function closeModal() {
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = "none", 300);
+        }
+
+        contactLink.onclick = openModal;
+        footerContactLink.onclick = openModal;
+        closeButton.onclick = closeModal;
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Form submission (you would typically send this to a server)
+        document.getElementById('contactForm').onsubmit = function (e) {
+            e.preventDefault();
+            alert('Thank you for your message! We will get back to you soon.');
+            closeModal();
+        }
+
+        // Donation button click event
+        document.getElementById('donate-button').onclick = function (e) {
+            e.preventDefault();
+            alert('Thank you for your interest in donating! This would typically redirect to a secure donation page.');
+        }
+
+        // Become a donor button click events
+        document.querySelectorAll('.become-donor').forEach(button => {
+            button.onclick = function (e) {
+                e.preventDefault();
+                alert('Thank you for your interest in becoming a donor! This would typically open a registration form.');
+            }
+        });
+    </script>
+</body>
+
+</html>
