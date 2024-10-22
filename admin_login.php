@@ -19,23 +19,30 @@ $errorMessage = "";
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Retrieve username and password from the form
-    $adminUsername = $_POST['username'];
+    $adminUsername = $_POST['username'];  // Changed from 'username' to 'name' to match the input field
     $adminPassword = $_POST['password'];
 
     // Prepare SQL query to check the credentials
-    $sql = "SELECT * FROM admin WHERE username = ? AND password = ?";
+    $sql = "SELECT * FROM users WHERE username = ? AND role = 'Admin'"; 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $adminUsername, $adminPassword);
+    $stmt->bind_param("s", $adminUsername);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // Verify the credentials
+    // Verify if admin exists
     if ($result->num_rows > 0) {
-        // Login success, redirect to admin dashboard
-        header("Location: admin_dashboard.php");
-        exit();
+        $row = $result->fetch_assoc();
+        // Verify the password
+        if (password_verify($adminPassword, $row['password'])) {  // Assuming passwords are hashed
+            // Login success, redirect to admin dashboard
+            header("Location: admin_dashboard.php");
+            exit();
+        } else {
+            // Invalid password
+            $errorMessage = "Invalid Username or Password!";
+        }
     } else {
-        // Invalid credentials, set error message
+        // Invalid username
         $errorMessage = "Invalid Username or Password!";
     }
 
@@ -50,54 +57,40 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - DonateConnect</title>
-    <link rel="stylesheet" href="style1.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="style2.css">
 </head>
 <body>
-    <!-- Header Section -->
-    <header>
-        <h1>DonateConnect</h1>
-        <div class="logo">
-            <img src="image5.png" alt="DonateConnect" class="logo-image">
+    <div class="header">
+        <div class="container">
+            <h1>DonateConnect</h1>
+            <nav>
+                <ul>
+                    <li><a href="index.html">HOME</a></li>
+                    <li><a href="admin_login.php">ADMIN</a></li>
+                    <li><a href="charity_login.php">CHARITY ORGANISATION</a></li>
+                    <li><a href="Donor_login.php">DONOR</a></li>
+                </ul>
+            </nav>
         </div>
-        <nav>
-            <a href="index.html">Home</a>
-            <a href="admin_login.php">Admin</a>
-            <a href="charity_login.php">Charity</a>
-            <a href="donor_login.php">Donor</a>
-        </nav>
-    </header>
+    </div>
+    
+    <div class="login-box">
+        <h2>Admin Login</h2>
+        <?php if (!empty($errorMessage)): ?>
+            <p style="color: red;"><?php echo $errorMessage; ?></p>
+        <?php endif; ?>
+        <form action="admin_login.php" method="POST">
+            <div class="textbox">
+                <input type="text" placeholder="Username" name="username" required> <!-- Updated name to 'name' -->
+            </div>
+            <div class="textbox">
+                <input type="password" placeholder="Password" name="password" required>
+            </div>
+            <button type="submit" class="btn">Login</button>
 
-    <!-- Admin Login Section -->
-    <section class="login-section">
-        <div class="login-container">
-            <h2>Admin Login</h2>
-            <!-- Display error message if credentials are invalid -->
-            <?php if ($errorMessage != ""): ?>
-                <p style="color: red;"><?php echo $errorMessage; ?></p>
-            <?php endif; ?>
             
-            <form method="POST" action="admin_login.php">
-                <div class="input-field">
-                    <input type="text" name="username" placeholder="Username*" required>
-                </div>
-                <div class="input-field">
-                    <input type="password" name="password" placeholder="Password*" required>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-        </div>
-    </section>
-
-    <footer>
-        <p>Contact Us: contact@DonateConnect.org</p>
-        <p>© 2024 DonateConnect</p>
-        <div class="social-icons">
-            <a href="#"><i class="fa fa-facebook"></i></a>
-            <a href="#"><i class="fa fa-twitter"></i></a>
-            <a href="#"><i class="fa fa-linkedin"></i></a>
-        </div>
-    </footer>
+        </form>
+    </div>
 </body>
 </html>

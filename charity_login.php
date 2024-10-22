@@ -1,46 +1,98 @@
+<?php
+// Database connection variables
+$servername = "localhost"; // change if using a different host
+$username = "root"; // replace with your MySQL username
+$password = ""; // replace with your MySQL password
+$dbname = "donateconnect"; // replace with the name of your database
+
+// Create connection to the MySQL database
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check the connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Initialize variables for error message
+$errorMessage = "";
+
+// Check if form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Retrieve username and password from the form
+    $charityUsername = $_POST['username'];  // Changed from 'username' to 'name' to match the input field
+    $charityPassword = $_POST['password'];
+
+    // Prepare SQL query to check the credentials
+    $sql = "SELECT * FROM users WHERE username = ? AND role = 'Charity'"; 
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $charityUsername);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Verify if admin exists
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        // Verify the password
+        if (password_verify($charityPassword, $row['password'])) {  // Assuming passwords are hashed
+            // Login success, redirect to charity dashboard
+            header("Location: charityorganisation_dashboard.php");
+            exit();
+        } else {
+            // Invalid password
+            $errorMessage = "Invalid Username or Password!";
+        }
+    } else {
+        // Invalid username
+        $errorMessage = "Invalid Username or Password!";
+    }
+
+    $stmt->close();
+}
+
+$conn->close();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Charity Login</title>
-    <link rel="stylesheet" href="style1.css">
+    <title>Charity Organisation Login</title>
+    <link rel="stylesheet" href="style2.css">
 </head>
 <body>
-    <header>
-        <div class="contact-info">
-            <span>+61 123456789</span>
-            <span>contact@DONATION.org</span>
-        </div>
-        <div class="nav-bar">
-            <h1>DONATION TRACKING SYSTEM</h1>
+    <div class="header">
+        <div class="container">
+            <h1>DonateConnect</h1>
             <nav>
                 <ul>
                     <li><a href="index.html">HOME</a></li>
-                    <li><a href="admin_login.php">Admin</a></li>
-                    <li><a href="charity_login.php" class="active">Charity Organisation</a></li>
-                    <li><a href="donor_login.php">Donor</a></li>
+                    <li><a href="admin_login.php">ADMIN</a></li>
+                    <li><a href="charity_login.php">CHARITY ORGANISATION</a></li>
+                    <li><a href="donor_login.php">DONOR</a></li>
                 </ul>
             </nav>
         </div>
-    </header>
-
-    <div class="login-container">
-        <h2>Charity Login</h2>
+    </div>
+    
+    <div class="login-box">
+        <h2>Charity Organisation Login</h2>
+        <?php if (!empty($errorMessage)): ?>
+            <p style="color: red;"><?php echo $errorMessage; ?></p>
+        <?php endif; ?>
         <form action="charity_login.php" method="POST">
-            <div class="input-group">
-                <label for="email">Email*</label>
-                <input type="email" id="email" name="email" required>
+            <div class="textbox">
+                <input type="text" placeholder="Username" name="username" required> 
             </div>
-            <div class="input-group">
-                <label for="password">Password*</label>
-                <input type="password" id="password" name="password" required>
+            <div class="textbox">
+                <input type="password" placeholder="Password" name="password" required>
             </div>
-            <button type="submit">Login</button>
+            <button type="submit" class="btn">Login</button>
+
+            <!-- Register link -->
+            <p>Don't have an account? <a href="register.php">Register here</a></p> 
+
         </form>
-        <div class="register-link">
-            <a href="charity_registration.php">New Charity Registration</a>
-        </div>
     </div>
 </body>
 </html>

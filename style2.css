@@ -49,10 +49,10 @@ nav ul li a {
 }
 
 .login-box {
-    width: 300px;
-    padding: 30px;
+    width: 400px;
+    padding: 40px;
     position: absolute;
-    top: 70%;
+    top: 60%;
     left: 50%;
     transform: translate(-50%, -50%);
     background: white;
@@ -71,7 +71,6 @@ nav ul li a {
 .textbox {
     position: relative;
     margin-bottom: 20px;
-    color :  #2681bb;
 }
 
 .textbox input {
@@ -83,18 +82,7 @@ nav ul li a {
     font-size: 18px;
     color: #333;
 }
-.textbox label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
 
-.textbox select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
 .btn {
     width: 100%;
     background:  #2681bb;
