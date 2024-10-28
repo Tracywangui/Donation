@@ -1,0 +1,1180 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root {
+    --primary-color: #2563eb;
+    --primary-light: #ebf3ff;
+    --primary-dark: #1d4ed8;
+    --text-color: #2d3748;
+    --sidebar-width: 250px;
+    --success-color: #15803d;
+    --success-light: #dcfce7;
+    --warning-color: #d97706;
+    --warning-light: #fef3c7;
+    --danger-color: #dc2626;
+    --danger-light: #fee2e2;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --transition: all 0.3s ease;
+}
+
+body {
+    background-color: var(--gray-50);
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo-container {
+    padding: 1.75rem;
+    border-bottom: 1px solid var(--gray-200);
+    background-color: var(--primary-color);
+    background-image: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+}
+
+.logo {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+.nav-links {
+    padding: 1.25rem;
+    flex-grow: 1;
+}
+
+.nav-item {
+    list-style: none;
+    margin-bottom: 0.75rem;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    color: var(--gray-500);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+}
+
+.nav-link i {
+    margin-right: 0.875rem;
+    width: 20px;
+    font-size: 1.125rem;
+}
+
+/* Main Content Styles */
+.main-content {
+    margin-left: var(--sidebar-width);
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--gray-50);
+    border-radius: 8px;
+}
+
+.user-info i {
+    color: var(--primary-color);
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* Donation Requests Specific Styles */
+.requests-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.requests-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.filter-btn {
+    padding: 0.625rem 1.25rem;
+    border: 1px solid var(--gray-200);
+    background-color: white;
+    color: var(--gray-500);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.filter-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.filter-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.requests-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.request-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    align-items: start;
+    transition: var(--transition);
+    border: 1px solid var(--gray-100);
+}
+
+.request-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.request-info h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.request-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.request-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.request-meta i {
+    color: var(--primary-color);
+}
+
+.request-description {
+    color: var(--gray-500);
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-badge.pending {
+    background-color: var(--warning-light);
+    color: var(--warning-color);
+}
+
+.status-badge.processed {
+    background-color: var(--success-light);
+    color: var(--success-color);
+}
+
+.request-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 120px;
+}
+
+.request-actions button {
+    padding: 0.625rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: var(--transition);
+    width: 100%;
+}
+
+.accept-btn {
+    background-color: var(--success-light);
+    color: var(--success-color);
+}
+
+.accept-btn:hover {
+    background-color: #bbf7d0;
+}
+
+.decline-btn {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+}
+
+.decline-btn:hover {
+    background-color: #fecaca;
+}
+
+.view-details-btn {
+    background-color: var(--gray-100);
+    color: var(--gray-500);
+}
+
+.view-details-btn:hover {
+    background-color: var(--gray-200);
+    color: var(--text-color);
+}
+
+/* Notification Styles */
+.notification-badge {
+    background-color: var(--danger-color);
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.notifications-icon {
+    position: relative;
+    margin-right: 2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.notifications-icon:hover {
+    background-color: var(--gray-100);
+}
+
+.notifications-icon i {
+    font-size: 1.25rem;
+    color: var(--gray-500);
+}
+
+/* Empty State Styling */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--gray-400);
+}
+
+.empty-state i {
+    font-size: 3.5rem;
+    color: var(--gray-300);
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--gray-500);
+}
+
+/* Logout Button */
+.logout-container {
+    padding: 1.25rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    border: none;
+    background: none;
+    color: var(--danger-color);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.logout-btn:hover {
+    background-color: var(--danger-light);
+}
+
+.logout-btn i {
+    margin-right: 0.875rem;
+    font-size: 1.125rem;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.content-area {
+    animation: fadeIn 0.3s ease-in-out;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Notification Toast */
+.notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    animation: slideIn 0.3s ease-out;
+    z-index: 1000;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Campaign Page Specific Styles */
+.campaigns-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.campaigns-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.add-campaign-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.add-campaign-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.add-campaign-btn i {
+    font-size: 0.875rem;
+}
+
+.campaigns-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.campaign-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--gray-100);
+    transition: var(--transition);
+}
+
+.campaign-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.campaign-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.campaign-description {
+    color: var(--gray-500);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.campaign-meta {
+    display: flex;
+    justify-content: space-between;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+.campaign-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.campaign-btn {
+    flex: 1;
+    padding: 0.625rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+}
+
+.edit-btn {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.edit-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.delete-btn {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+}
+
+.delete-btn:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: relative;
+    background-color: white;
+    margin: 2rem auto;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.close-modal {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--gray-400);
+    transition: var(--transition);
+}
+
+.close-modal:hover {
+    color: var(--danger-color);
+}
+
+#modalTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-submit {
+    width: 100%;
+    padding: 0.875rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.form-submit:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Notifications Page Specific Styles */
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.notifications-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.notification-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.mark-all-read-btn,
+.clear-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.mark-all-read-btn {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.mark-all-read-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.clear-all-btn {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+}
+
+.clear-all-btn:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.notification-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
+    border: 1px solid var(--gray-100);
+}
+
+.notification-item.unread {
+    background-color: var(--primary-light);
+    border-color: var(--primary-color);
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+}
+
+.notification-item.unread .notification-icon {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.notification-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.notification-message {
+    color: var(--text-color);
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.notification-date {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.mark-read-btn,
+.delete-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.mark-read-btn {
+    background-color: var(--success-light);
+    color: var(--success-color);
+}
+
+.mark-read-btn:hover:not(:disabled) {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.mark-read-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.delete-btn {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+}
+
+.delete-btn:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+/* Empty State Styling for Notifications */
+.notifications-list .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--gray-400);
+}
+
+.notifications-list .empty-state i {
+    font-size: 3.5rem;
+    color: var(--gray-300);
+    margin-bottom: 1.5rem;
+}
+
+.notifications-list .empty-state h3 {
+    font-size: 1.25rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.notifications-list .empty-state p {
+    color: var(--gray-500);
+}
+
+/* Transaction Page Specific Styles */
+.transactions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.transactions-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.transaction-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-container {
+    position: relative;
+}
+
+.search-input {
+    padding: 0.625rem 1rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    width: 250px;
+    transition: var(--transition);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.transaction-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
+}
+
+.transaction-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.transaction-card.incoming {
+    border-left: 4px solid var(--success-color);
+}
+
+.transaction-card.outgoing {
+    border-left: 4px solid var(--warning-color);
+}
+
+.transaction-info {
+    flex: 1;
+}
+
+.transaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.transaction-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.transaction-amount {
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.transaction-amount.incoming {
+    color: var(--success-color);
+}
+
+.transaction-amount.outgoing {
+    color: var(--warning-color);
+}
+
+.transaction-details {
+    display: flex;
+    gap: 1.5rem;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.transaction-details span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.transaction-details i {
+    color: var(--primary-color);
+}
+
+.view-invoice-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.view-invoice-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Invoice Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: relative;
+    background-color: white;
+    margin: 2rem auto;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.close-modal {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    color: var(--gray-500);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.close-modal:hover {
+    color: var(--text-color);
+}
+
+.invoice-content {
+    margin-top: 1rem;
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.organization-info h2 {
+    font-size: 1.5rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.organization-info p {
+    color: var(--gray-500);
+    margin: 0.25rem 0;
+}
+
+.invoice-details h3 {
+    font-size: 1.25rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.invoice-details p {
+    color: var(--gray-500);
+}
+
+.invoice-body {
+    margin-top: 2rem;
+}
+
+.party-info {
+    margin-bottom: 2rem;
+}
+
+.party-info h4 {
+    font-size: 1rem;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+}
+
+.party-info p {
+    font-size: 1.125rem;
+    color: var(--text-color);
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+}
+
+.invoice-table th,
+.invoice-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.invoice-table th {
+    background-color: var(--gray-50);
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.invoice-table tfoot {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.invoice-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.print-btn,
+.download-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.print-btn {
+    background-color: var(--gray-100);
+    color: var(--text-color);
+    border: none;
+}
+
+.print-btn:hover {
+    background-color: var(--gray-200);
+}
+
+.download-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+}
+
+.download-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Filter Button Styles */
+.filter-btn {
+    padding: 0.625rem 1.25rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background-color: white;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* Empty State Styles */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--gray-300);
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--gray-500);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .transactions-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .transaction-actions {
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        width: 100%;
+    }
+
+    .transaction-card {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .transaction-details {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .invoice-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .invoice-actions {
+        flex-direction: column;
+    }
+
+    .print-btn,
+    .download-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
