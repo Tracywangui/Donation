@@ -1,23 +1,21 @@
 <?php
-// Start session to access stored username
 session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['charityUsername'])) {
-    // Redirect to login page if not logged in
     header("Location: ../charity_login.php");
     exit();
 }
 
-// Retrieve the username from the session
-$charityUsername = $_SESSION['charityUsername'];
+// Get the username from session
+$username = $_SESSION['charityUsername'];
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donateconnect - Charity Dashboard</title>
+    <title>DonateConnect - Charity Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="charity.css" rel="stylesheet">
     <script src="auth-check.js"></script>
@@ -36,13 +34,13 @@ $charityUsername = $_SESSION['charityUsername'];
                 </a>
             </li>
             <li class="nav-item">
-                <a href="campaigns.php" class="nav-link " data-page="campaigns">
+                <a href="campaigns.php" class="nav-link" data-page="campaigns">
                     <i class="fas fa-hand-holding-heart"></i>
                     <span>Campaigns</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="donations.php" class="nav-link " data-page="donations">
+                <a href="donations.php" class="nav-link" data-page="donations">
                     <i class="fas fa-gift"></i>
                     <span>Donations</span>
                 </a>
@@ -53,11 +51,11 @@ $charityUsername = $_SESSION['charityUsername'];
                     <span>Transactions</span>
                 </a>
             </li>
+            
             <li class="nav-item">
-                <a href="Notifications.php" class="nav-link " data-page="notifications">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
-                    <span class="notification-badge" id="notificationCount">0</span>
+                <a href="request_donation.php" class="nav-link" data-page="request-donation">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Request Donation</span>
                 </a>
             </li>
         </ul>
@@ -73,12 +71,12 @@ $charityUsername = $_SESSION['charityUsername'];
         <div class="top-bar">
             <div class="user-info">
                 <i class="fas fa-user"></i>
-                <span class="user-name" id="username"><?php echo htmlspecialchars($charityUsername); ?></span> <!-- Display username from session -->
+                <span class="user-name"><?php echo htmlspecialchars($username); ?></span>
             </div>
         </div>
         <div class="content-area" id="contentArea">
             <!-- Content will be loaded here -->
-            <h2>Welcome to Charity Organisation Dashboard</h2>
+            <h2>Welcome to DonateConnect Dashboard</h2>
             <p>Select a menu option to get started.</p>
         </div>
     </div>
@@ -88,9 +86,13 @@ $charityUsername = $_SESSION['charityUsername'];
         document.addEventListener('DOMContentLoaded', () => {
             const isLoggedIn = localStorage.getItem('isLoggedIn');
             if (!isLoggedIn) {
-                window.location.href = 'CharityOrganisation.php'; // Redirect to login if not logged in
+                window.location.href = 'CharityOrganisation.php';
                 return;
             }
+
+            // Update username from localStorage
+            const username = localStorage.getItem('username');
+            document.getElementById('username').textContent = username;
         });
 
         // Navigation handling
@@ -99,7 +101,8 @@ $charityUsername = $_SESSION['charityUsername'];
             link.addEventListener('click', (e) => {
                 const href = link.getAttribute('href');
                 if (href && href !== '#') {
-                    return; // Allow normal navigation for links with real URLs
+                    // Allow normal navigation for links with real URLs
+                    return;
                 }
 
                 e.preventDefault();
@@ -128,7 +131,7 @@ $charityUsername = $_SESSION['charityUsername'];
         document.getElementById('logoutBtn').addEventListener('click', () => {
             if(confirm('Are you sure you want to logout?')) {
                 localStorage.clear();
-                window.location.href = '../charity_login.php'; // Redirect to login page after logout
+                window.location.href = '../charity_login.php';
             }
         });
     </script>

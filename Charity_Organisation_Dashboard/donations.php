@@ -1,27 +1,30 @@
 <?php
-// donations.php
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Database connection
-$servername = "localhost"; // Change this if your database server is different
-$username = "root"; // Your MySQL username
-$password = ""; // Your MySQL password
-$dbname = "donateconnect"; // Your database name
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+// Check if user is logged in
 if (!isset($_SESSION['charityUsername'])) {
-    // Redirect to login page if not logged in
-    header("Location:donations.php");
+    header("Location: ../charity_login.php");
     exit();
 }
 
-// Retrieve the username from the session
+// Get the logged-in username
 $charityUsername = $_SESSION['charityUsername'];
+
+// Database configuration
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "donateconnect";
+
+// Create a connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check the connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
 // Fetch donations from the database
 $sql = "SELECT d.id, d.title, u.firstname AS donor, d.date, d.amount, d.description, d.status 
@@ -289,7 +292,7 @@ $conn->close();
         <div class="top-bar">
             <div class="user-info">
                 <i class="fas fa-user"></i>
-                <span class="user-name" id="username"><?php echo htmlspecialchars($charityUsername); ?></span> <!-- Display username from session -->
+                <span class="user-name" id="username"><?php echo htmlspecialchars($charityUsername); ?></span>
             </div>
         </div>
         <div class="content-area">

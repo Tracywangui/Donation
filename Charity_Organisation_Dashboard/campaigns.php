@@ -1,18 +1,22 @@
 <?php
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Check if user is logged in
+if (!isset($_SESSION['charityUsername'])) {
+    header("Location: ../charity_login.php");
+    exit();
+}
+
+// Get the logged-in username
+$charityUsername = $_SESSION['charityUsername'];
+
 // Database configuration
 $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "donateconnect";
-
-// Start the session
-session_start();
-
-// Check if user is logged in
-if (!isset($_SESSION['username'])) {
-    header("Location: campaigns.php"); // Redirect to login page if not logged in
-    exit();
-}
 
 // Create a connection
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -27,7 +31,7 @@ $campaigns = [];
 $message = "";
 
 // Fetch campaigns
-$result = $conn->query("SELECT * FROM campaigns WHERE charity_id = (SELECT id FROM users WHERE username = '{$_SESSION['username']}')");
+$result = $conn->query("SELECT * FROM campaigns WHERE charity_id = (SELECT id FROM users WHERE username = '$charityUsername')");
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $campaigns[] = $row;
@@ -40,15 +44,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $description = $_POST['description'];
     $goal = $_POST['goal'];
     $endDate = $_POST['endDate'];
-    $charity_id = $conn->query("SELECT id FROM users WHERE username = '{$_SESSION['username']}'")->fetch_assoc()['id'];
+    $status = 'active'; // Default status for new campaigns
 
-    $stmt = $conn->prepare("INSERT INTO campaigns (charity_id, title, description, goal, endDate, createdAt) VALUES (?, ?, ?, ?, ?, NOW())");
-    $stmt->bind_param("issds", $charity_id, $title, $description, $goal, $endDate);
+    // Fetch the charity ID based on the session username
+    $charity_id_result = $conn->query("SELECT id FROM users WHERE username = '$charityUsername'");
+    if ($charity_id_result && $charity_id_result->num_rows > 0) {
+        $charity_id = $charity_id_result->fetch_assoc()['id'];
+        
+        // Updated INSERT query to include all necessary fields
+        $stmt = $conn->prepare("INSERT INTO campaigns (charity_id, title, description, goal, endDate, createdAt, updatedAt, status) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)");
+        $stmt->bind_param("issdss", $charity_id, $title, $description, $goal, $endDate, $status);
 
-    if ($stmt->execute()) {
-        $message = "Campaign added successfully";
-        header("Location: campaigns.php?message=" . urlencode($message));
-        exit();
+        if ($stmt->execute()) {
+            $message = "Campaign added successfully";
+            header("Location: campaigns.php?message=" . urlencode($message));
+            exit();
+        } else {
+            die("Error adding campaign: " . $stmt->error);
+        }
+    } else {
+        die("Charity ID not found for username: " . htmlspecialchars($charityUsername));
     }
 }
 
@@ -100,29 +115,29 @@ $conn->close();
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo-container">
-            <div class="logo">DonateConnect Dashboard</div>
+            <div class="logo"> Charity Dashboard</div>
         </div>
         <ul class="nav-links">
             <li class="nav-item">
-                <a href="charityhome.html" class="nav-link" data-page="home">
+                <a href="/IS PROJECT CODING/Charity_Organisation_Dashboard/CharityOrganisation.php" class="nav-link" data-page="home">
                     <i class="fas fa-home"></i>
                     <span>Home</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="campaign.php" class="nav-link active" data-page="requests">
+                <a href="/IS PROJECT CODING/Charity_Organisation_Dashboard/campaigns.php" class="nav-link active" data-page="requests">
                     <i class="fas fa-hand-holding-heart"></i>
                     <span>Campaigns</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="donations.html" class="nav-link" data-page="donations">
+                <a href="/IS PROJECT CODING/Charity_Organisation_Dashboard/donations.php" class="nav-link" data-page="donations">
                     <i class="fas fa-gift"></i>
                     <span>Donations</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="transactions.html" class="nav-link" data-page="transactions">
+                <a href="/IS PROJECT CODING/Charity_Organisation_Dashboard/transactions.php" class="nav-link" data-page="transactions">
                     <i class="fas fa-file-invoice-dollar"></i>
                     <span>Transactions</span>
                 </a>
@@ -141,7 +156,7 @@ $conn->close();
         <div class="top-bar">
             <div class="user-info">
                 <i class="fas fa-user"></i>
-                <span class="user-name" id="username"><?php echo htmlspecialchars($charityUsername); ?></span> <!-- Display username from session -->
+                <span class="user-name" id="username"><?php echo htmlspecialchars($charityUsername); ?></span>
             </div>
         </div>
         <div class="content-area">
@@ -161,7 +176,7 @@ $conn->close();
                         <h3 class="campaign-title"><?php echo htmlspecialchars($campaign['title']); ?></h3>
                         <p class="campaign-description"><?php echo htmlspecialchars($campaign['description']); ?></p>
                         <div class="campaign-meta">
-                            <span>Goal: $<?php echo htmlspecialchars($campaign['goal']); ?></span>
+                            <span>Goal: Ksh <?php echo htmlspecialchars($campaign['goal']); ?></span>
                             <span>Ends: <?php echo htmlspecialchars($campaign['endDate']); ?></span>
                         </div>
                         <div class="campaign-actions">
@@ -201,14 +216,14 @@ $conn->close();
                     <textarea name="description" id="description" required></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="goal">Goal Amount (Ksh)</label>
-                    <input type="number" name="goal" id="goal" required min="0">
+                    <label for="goal">Goal (Ksh)</label>
+                    <input type="number" name="goal" id="goal" required>
                 </div>
                 <div class="form-group">
                     <label for="endDate">End Date</label>
                     <input type="date" name="endDate" id="endDate" required>
                 </div>
-                <button type="submit">Save Campaign</button>
+                <button type="submit" class="submit-btn">Submit</button>
             </form>
         </div>
     </div>
@@ -227,15 +242,11 @@ $conn->close();
 
         function closeModal() {
             document.getElementById('campaignModal').style.display = 'none';
-            // Reset the form fields
-            document.getElementById('campaignForm').reset();
         }
 
-        // Logout functionality
         document.getElementById('logoutBtn').onclick = function() {
-            window.location.href = '../charity_login.php'; // Redirect to the logout script
-        }
+            window.location.href = 'logout.php';
+        };
     </script>
 </body>
 </html>
-

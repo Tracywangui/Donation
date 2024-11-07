@@ -1,61 +1,63 @@
 <?php
-// Start session to store Organisation login details
+// Add these at the very top of the file
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Start session
 session_start();
 
 // Database connection variables
-$servername = "localhost"; // change if using a different host
-$username = "root"; // replace with your MySQL username
-$password = ""; // replace with your MySQL password
-$dbname = "donateconnect"; // replace with the name of your database
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "donateconnect";
 
-// Create connection to the MySQL database
+// Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Check the connection
+// Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Initialize variables for error message
+// Initialize error message
 $errorMessage = "";
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Retrieve username and password from the form
-    $charityUsername = $_POST['username']; 
+    $charityUsername = $_POST['username'];  
     $charityPassword = $_POST['password'];
 
-    // Prepare SQL query to check the credentials
     $sql = "SELECT * FROM users WHERE username = ? AND role = 'Charity'";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $charityUsername);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // Verify if organisation exists
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        // Verify the password
         if (password_verify($charityPassword, $row['password'])) {
-            // Store the username in session and redirect to the charity dashboard
             $_SESSION['charityUsername'] = $charityUsername;
+            
+            // Clear any output buffers
+            ob_clean();
+            
+            // Use relative path instead of absolute path
             header("Location: Charity_Organisation_Dashboard/CharityOrganisation.php");
             exit();
         } else {
-            // Invalid password
             $errorMessage = "Invalid Username or Password!";
         }
     } else {
-        // Invalid username
         $errorMessage = "Invalid Username or Password!";
     }
-
     $stmt->close();
 }
 
 $conn->close();
-?>
 
+// Move the HTML output after all PHP processing
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -189,7 +191,28 @@ $conn->close();
             transform: translateY(-1px);
         }
 
-        .error-message {
+        .auth-footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #697289;
+        }
+
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        #error-message {
             color: #dc3545;
             text-align: center;
             margin-bottom: 1rem;
@@ -206,7 +229,7 @@ $conn->close();
                     <li><a href="index.html">Home</a></li>
                     <li><a href="admin_login.php">Admin</a></li>
                     <li><a href="charity_login.php">Charity Organisation</a></li>
-                    <li><a href=".donor_login.php">Donor</a></li>
+                    <li><a href="donor_login.php">Donor</a></li>
                 </ul>
             </nav>
         </div>
@@ -216,9 +239,7 @@ $conn->close();
         <div class="auth-card">
             <div class="auth-title">Charity Organisation Login</div>
 
-            <?php if (!empty($errorMessage)): ?>
-                <div class="error-message"><?php echo $errorMessage; ?></div>
-            <?php endif; ?>
+            <div id="error-message" hidden>Invalid Username or Password!</div>
 
             <form action="charity_login.php" method="POST">
                 <div class="form-group">
@@ -227,7 +248,7 @@ $conn->close();
                         <span class="input-group-text">
                             <i class="fas fa-user"></i>
                         </span>
-                        <input type="text" class="form-control" name="username" placeholder="Enter username" required>
+                        <input type="text" class="form-control" name="username" id="username" placeholder="Enter username" required>
                     </div>
                 </div>
 
@@ -237,12 +258,16 @@ $conn->close();
                         <span class="input-group-text">
                             <i class="fas fa-lock"></i>
                         </span>
-                        <input type="password" class="form-control" name="password" placeholder="Enter password" required>
+                        <input type="password" class="form-control" name="password" id="password" placeholder="Enter password" required>
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary">Login</button>
             </form>
+
+            <div class="auth-footer">
+                Don't have an account? <a href="register.php">Register here</a>
+            </div>
         </div>
     </div>
 

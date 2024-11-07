@@ -3,10 +3,10 @@
 session_start();
 
 // Database connection variables
-$servername = "localhost"; // change if using a different host
-$username = "root"; // replace with your MySQL username
-$password = ""; // replace with your MySQL password
-$dbname = "donateconnect"; // replace with the name of your database
+$servername = "localhost"; // Change if using a different host
+$username = "root"; // Replace with your MySQL username
+$password = ""; // Replace with your MySQL password
+$dbname = "donateconnect"; // Replace with the name of your database
 
 // Create connection to the MySQL database
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -32,9 +32,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // Verify if admin exists
+    // Check if the query returned any rows
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
+
+        // Debug: Output fetched user information (for troubleshooting)
+        var_dump($row); // Remove or comment out this line in production
+
         // Verify the password
         if (password_verify($adminPassword, $row['password'])) {
             // Store the username in session and redirect to the admin dashboard
@@ -55,6 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

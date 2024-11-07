@@ -1,28 +1,30 @@
 <?php
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Check if user is logged in
+if (!isset($_SESSION['charityUsername'])) {
+    header("Location: ../charity_login.php");
+    exit();
+}
+
+// Get the logged-in username
+$charityUsername = $_SESSION['charityUsername'];
+
 // Database configuration
 $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "donateconnect";
 
-// Create connection
+// Create a connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-if (!isset($_SESSION['isLoggedIn']) || $_SESSION['isLoggedIn'] !== true) {
-    header('Location: Transactions.php'); // Redirect to the login page
-    exit();
-}
-
-// Set the username from the session
-$charityUsername = $_SESSION['charityUsername'];
-
-// Check connection
+// Check the connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
-
-// Start session
-session_start();
 
 // Fetch transactions from the database (modify the query as needed)
 $transactions = [];
@@ -83,9 +85,9 @@ $conn->close();
                 </a>
             </li>
             <li class="nav-item">
-                <a href="Notifications.php" class="nav-link" data-page="notifications">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
+                <a href="request_donation.php" class="nav-link" data-page="request-donation">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Request Donation</span>
                 </a>
             </li>
         </ul>

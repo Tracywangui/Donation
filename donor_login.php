@@ -1,9 +1,12 @@
 <?php
+// Start session
+session_start();
+
 // Database connection variables
-$servername = "localhost"; // Change if using a different host
-$username = "root"; // Replace with your MySQL username
-$password = ""; // Replace with your MySQL password
-$dbname = "donateconnect"; // Replace with the name of your database
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "donateconnect";
 
 // Create connection to the MySQL database
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -23,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $donorPassword = $_POST['password'];
 
     // Prepare SQL query to check the credentials
-    $sql = "SELECT * FROM users WHERE username = ? AND role = 'Donor'"; // Assuming the 'role' column indicates user type
+    $sql = "SELECT * FROM users WHERE username = ? AND role = 'Donor'";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $donorUsername);
     $stmt->execute();
@@ -33,8 +36,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         // Verify the password
-        if (password_verify($donorPassword, $row['password'])) {  // Assuming passwords are hashed
-            // Login success, redirect to donor dashboard
+        if (password_verify($donorPassword, $row['password'])) {
+            // Login success, set session variable
+            $_SESSION['donorUsername'] = $donorUsername; // Set the session variable
+            // Redirect to donor dashboard
             header("Location: Donor Dashboard/donor_dashboard.php");
             exit();
         } else {
