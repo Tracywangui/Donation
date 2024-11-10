@@ -81,6 +81,11 @@ $monthly_growth_query = "
 $growth_result = mysqli_query($conn, $monthly_growth_query);
 $monthly_growth = mysqli_fetch_assoc($growth_result)['growth_rate'];
 
+// Get total charity organizations
+$charity_orgs_query = "SELECT COUNT(*) as total FROM charity_organizations";
+$charity_orgs_result = mysqli_query($conn, $charity_orgs_query);
+$total_charity_orgs = mysqli_fetch_assoc($charity_orgs_result)['total'];
+
 // Get recent activities
 $activities_query = "
     (SELECT 
@@ -186,6 +191,11 @@ $activities_result = mysqli_query($conn, $activities_query);
                     <i class="fas fa-users icon"></i>
                     <h3>Total Donors</h3>
                     <div class="number" id="totalDonors"><?php echo number_format($total_donors); ?></div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-building icon"></i>
+                    <h3>Total Charity Organizations</h3>
+                    <div class="number" id="totalCharityOrgs"><?php echo number_format($total_charity_orgs); ?></div>
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-hand-holding-heart icon"></i>

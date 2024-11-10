@@ -148,24 +148,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             mysqli_stmt_bind_param($stmt, "i", $id);
             mysqli_stmt_execute($stmt);
 
-            // Delete from charity_organizations
+            // Get user_id before deleting charity
+            $query = "SELECT user_id FROM charity_organizations WHERE id = ?";
+            $stmt = mysqli_prepare($conn, $query);
+            mysqli_stmt_bind_param($stmt, "i", $id);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $user = mysqli_fetch_assoc($result);
+
+            // Delete the charity organization
             $query = "DELETE FROM charity_organizations WHERE id = ?";
             $stmt = mysqli_prepare($conn, $query);
             mysqli_stmt_bind_param($stmt, "i", $id);
-            $result = mysqli_stmt_execute($stmt);
+            mysqli_stmt_execute($stmt);
 
-            if ($result) {
-                mysqli_commit($conn);
-                echo json_encode(['success' => true]);
-            } else {
-                throw new Exception(mysqli_error($conn));
+            // Finally delete the associated user if exists
+            if ($user && $user['user_id']) {
+                $query = "DELETE FROM users WHERE id = ?";
+                $stmt = mysqli_prepare($conn, $query);
+                mysqli_stmt_bind_param($stmt, "i", $user['user_id']);
+                mysqli_stmt_execute($stmt);
             }
+
+            mysqli_commit($conn);
+            echo json_encode(['success' => true]);
+            
         } catch (Exception $e) {
             mysqli_rollback($conn);
-            error_log("Delete charity error: " . $e->getMessage());
             echo json_encode([
-                'success' => false, 
-                'message' => 'Failed to delete charity: ' . $e->getMessage()
+                'success' => false,
+                'message' => 'Error deleting charity: ' . $e->getMessage()
             ]);
         }
         exit();
@@ -266,29 +278,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $id = $data['id'];
         
-        // First, delete the user associated with this charity
-        $query = "DELETE FROM users WHERE id = (SELECT user_id FROM charity_organizations WHERE id = ?)";
-        $stmt = mysqli_prepare($conn, $query);
-        mysqli_stmt_bind_param($stmt, "i", $id);
+        mysqli_begin_transaction($conn);
         
-        if (mysqli_stmt_execute($stmt)) {
-            // Then delete the charity organization
+        try {
+            // First delete associated donations
+            $query = "DELETE donations FROM donations 
+                     INNER JOIN campaigns ON donations.campaign_id = campaigns.id 
+                     WHERE campaigns.charity_id = ?";
+            $stmt = mysqli_prepare($conn, $query);
+            mysqli_stmt_bind_param($stmt, "i", $id);
+            mysqli_stmt_execute($stmt);
+
+            // Then delete associated campaigns
+            $query = "DELETE FROM campaigns WHERE charity_id = ?";
+            $stmt = mysqli_prepare($conn, $query);
+            mysqli_stmt_bind_param($stmt, "i", $id);
+            mysqli_stmt_execute($stmt);
+
+            // Get user_id before deleting charity
+            $query = "SELECT user_id FROM charity_organizations WHERE id = ?";
+            $stmt = mysqli_prepare($conn, $query);
+            mysqli_stmt_bind_param($stmt, "i", $id);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $user = mysqli_fetch_assoc($result);
+
+            // Delete the charity organization
             $query = "DELETE FROM charity_organizations WHERE id = ?";
             $stmt = mysqli_prepare($conn, $query);
             mysqli_stmt_bind_param($stmt, "i", $id);
-            
-            if (mysqli_stmt_execute($stmt)) {
-                echo json_encode(['success' => true]);
-            } else {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Error deleting charity: ' . mysqli_error($conn)
-                ]);
+            mysqli_stmt_execute($stmt);
+
+            // Finally delete the associated user if exists
+            if ($user && $user['user_id']) {
+                $query = "DELETE FROM users WHERE id = ?";
+                $stmt = mysqli_prepare($conn, $query);
+                mysqli_stmt_bind_param($stmt, "i", $user['user_id']);
+                mysqli_stmt_execute($stmt);
             }
-        } else {
+
+            mysqli_commit($conn);
+            echo json_encode(['success' => true]);
+            
+        } catch (Exception $e) {
+            mysqli_rollback($conn);
             echo json_encode([
                 'success' => false,
-                'message' => 'Error deleting associated user: ' . mysqli_error($conn)
+                'message' => 'Error deleting charity: ' . $e->getMessage()
             ]);
         }
         exit();
@@ -298,76 +334,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Update the charity update handler
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_charity') {
     header('Content-Type: application/json');
-    ob_clean();
     
     try {
+        // Debug: Log the received POST data
+        error_log("Received POST data: " . print_r($_POST, true));
+        
+        // Validate required fields
         if (empty($_POST['charity_id']) || empty($_POST['organization_name']) || 
             empty($_POST['email']) || empty($_POST['phoneNo'])) {
             throw new Exception('All fields are required');
         }
         
         $charity_id = (int)$_POST['charity_id'];
-        $organization_name = mysqli_real_escape_string($conn, $_POST['organization_name']);
-        $email = mysqli_real_escape_string($conn, $_POST['email']);
-        $phoneNo = mysqli_real_escape_string($conn, $_POST['phoneNo']);
+        $organization_name = trim($_POST['organization_name']);
+        $email = trim($_POST['email']);
+        $phoneNo = trim($_POST['phoneNo']);
+        
+        // Debug: Log the processed variables
+        error_log("Processing update for charity_id: $charity_id");
+        error_log("organization_name: $organization_name");
+        error_log("email: $email");
+        error_log("phoneNo: $phoneNo");
         
         mysqli_begin_transaction($conn);
         
-        // Get user_id from charity_organizations
-        $query = "SELECT user_id FROM charity_organizations WHERE id = ?";
-        $stmt = mysqli_prepare($conn, $query);
-        if (!$stmt) {
-            throw new Exception(mysqli_error($conn));
+        try {
+            // First, get the user_id from charity_organizations
+            $query = "SELECT user_id FROM charity_organizations WHERE id = ?";
+            $stmt = mysqli_prepare($conn, $query);
+            mysqli_stmt_bind_param($stmt, "i", $charity_id);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $charity = mysqli_fetch_assoc($result);
+            
+            if (!$charity) {
+                throw new Exception('Charity not found');
+            }
+            
+            $user_id = $charity['user_id'];
+            error_log("Found user_id: $user_id");
+            
+            // Update charity_organizations table
+            $query = "UPDATE charity_organizations 
+                     SET organization_name = ?, 
+                         email = ?
+                     WHERE id = ?";
+            $stmt = mysqli_prepare($conn, $query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed for charity update: " . mysqli_error($conn));
+            }
+            mysqli_stmt_bind_param($stmt, "ssi", $organization_name, $email, $charity_id);
+            
+            if (!mysqli_stmt_execute($stmt)) {
+                throw new Exception("Error updating charity organization: " . mysqli_error($conn));
+            }
+            error_log("Successfully updated charity_organizations table");
+            
+            // Update users table
+            $query = "UPDATE users 
+                     SET email = ?, 
+                         phoneNo = ?
+                     WHERE id = ?";
+            $stmt = mysqli_prepare($conn, $query);
+            if (!$stmt) {
+                throw new Exception("Prepare failed for user update: " . mysqli_error($conn));
+            }
+            mysqli_stmt_bind_param($stmt, "ssi", $email, $phoneNo, $user_id);
+            
+            if (!mysqli_stmt_execute($stmt)) {
+                throw new Exception("Error updating user: " . mysqli_error($conn));
+            }
+            error_log("Successfully updated users table");
+            
+            mysqli_commit($conn);
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Organization details updated successfully'
+            ]);
+            
+        } catch (Exception $e) {
+            mysqli_rollback($conn);
+            error_log("Error in transaction: " . $e->getMessage());
+            throw $e;
         }
-        mysqli_stmt_bind_param($stmt, "i", $charity_id);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $charity = mysqli_fetch_assoc($result);
-        
-        if (!$charity) {
-            throw new Exception('Charity not found');
-        }
-        
-        // Update charity_organizations table
-        $query = "UPDATE charity_organizations SET 
-                 organization_name = ?,
-                 email = ?
-                 WHERE id = ?";
-        $stmt = mysqli_prepare($conn, $query);
-        if (!$stmt) {
-            throw new Exception(mysqli_error($conn));
-        }
-        mysqli_stmt_bind_param($stmt, "ssi", $organization_name, $email, $charity_id);
-        if (!mysqli_stmt_execute($stmt)) {
-            throw new Exception(mysqli_error($conn));
-        }
-        
-        // Update users table with the correct column names
-        $query = "UPDATE users SET 
-                 email = ?,
-                 phoneNo = ?
-                 WHERE id = ?";
-        $stmt = mysqli_prepare($conn, $query);
-        if (!$stmt) {
-            throw new Exception(mysqli_error($conn));
-        }
-        mysqli_stmt_bind_param($stmt, "ssi", $email, $phoneNo, $charity['user_id']);
-        if (!mysqli_stmt_execute($stmt)) {
-            throw new Exception(mysqli_error($conn));
-        }
-        
-        mysqli_commit($conn);
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Organization updated successfully'
-        ]);
         
     } catch (Exception $e) {
-        mysqli_rollback($conn);
+        error_log("Final error: " . $e->getMessage());
         echo json_encode([
             'success' => false,
-            'message' => $e->getMessage()
+            'message' => 'Error updating organization details: ' . $e->getMessage()
         ]);
     }
     exit();
@@ -405,7 +461,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <li class="nav-item">
                 <a href="Charity_organisation_details.php" class="nav-link active" data-page="charities">
                     <i class="fas fa-building"></i>
-                    <span>Charities</span>
+                    <span>Charity Organizations</span>
                 </a>
             </li>
             
@@ -452,10 +508,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <td><?php echo $charity['campaign_count']; ?></td>
                             <td>KSh <?php echo number_format($charity['total_donations'], 2); ?></td>
                             <td class="actions">
-                                <button class="btn btn-primary" onclick="editCharity(<?php echo $charity['id']; ?>, 
-                                    '<?php echo htmlspecialchars($charity['organization_name']); ?>', 
-                                    '<?php echo htmlspecialchars($charity['email']); ?>',
-                                    '<?php echo htmlspecialchars($charity['phoneNo']); ?>')">
+                                <button class="btn btn-primary edit-btn" onclick='editCharity(<?php 
+                                    echo json_encode([
+                                        'id' => $charity['id'],
+                                        'organization_name' => $charity['organization_name'],
+                                        'email' => $charity['email'],
+                                        'phone' => $charity['phone'] ?? ''
+                                    ]); 
+                                ?>)'>
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
                                 <button class="btn btn-delete" onclick="deleteCharity(<?php echo $charity['id']; ?>)">
@@ -518,34 +578,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     </div>
 
     <!-- Edit Modal -->
-    <div class="modal" id="editModal">
+    <div id="editModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Organization Details</h5>
-                <span class="close">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="editCharityForm">
-                    <input type="hidden" id="editCharityId" name="charity_id">
-                    
-                    <div class="form-group">
-                        <label for="organizationName">Organization Name:</label>
-                        <input type="text" id="organizationName" name="organization_name" class="form-control" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email">Email:</label>
-                        <input type="email" id="email" name="email" class="form-control" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="phoneNo">Phone Number:</label>
-                        <input type="text" id="phoneNo" name="phoneNo" class="form-control" required>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </form>
-            </div>
+            <span class="close">&times;</span>
+            <h2>Edit Organization</h2>
+            <form id="editCharityForm">
+                <input type="hidden" id="editCharityId" name="charity_id">
+                
+                <div class="form-group">
+                    <label for="organizationName">Organization Name</label>
+                    <input type="text" id="organizationName" name="organization_name" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phoneNo">Phone Number</label>
+                    <input type="text" id="phoneNo" name="phoneNo" class="form-control" required>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -783,112 +842,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const viewModal = document.getElementById('viewModal');
             const editModal = document.getElementById('editModal');
-            
-            // View Charity Details
-            window.viewCharityDetails = function(id) {
-                fetch(`?action=get_charity_details&id=${id}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById('viewName').textContent = data.organization_name;
-                        document.getElementById('viewEmail').textContent = data.email;
-                        document.getElementById('viewPhone').textContent = data.phoneNo || 'N/A';
-                        document.getElementById('viewRegistrationDate').textContent = 
-                            new Date(data.created_at).toLocaleDateString();
-                        document.getElementById('viewCampaigns').textContent = data.campaign_count;
-                        document.getElementById('viewDonations').textContent = 
-                            `KSh ${parseFloat(data.total_donations).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            })}`;
-                        viewModal.style.display = "block";
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error fetching charity details');
-                    });
-            }
 
-            // Edit Charity
-            window.editCharity = function(id, name, email, phoneNo) {
-                document.getElementById('editCharityId').value = id;
-                document.getElementById('organizationName').value = name;
-                document.getElementById('email').value = email;
-                document.getElementById('phoneNo').value = phoneNo;
-                
-                // Show the modal/form
-                $('#editModal').modal('show'); // If using Bootstrap modal
-            }
-
-            // Delete Charity
-            window.deleteCharity = function(id) {
-                if (confirm('Are you sure you want to delete this charity organization? This action cannot be undone.')) {
-                    fetch('', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            action: 'delete_charity',
-                            id: id
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Charity organization deleted successfully!');
-                            window.location.reload();
-                        } else {
-                            alert(data.message || 'Error deleting charity organization');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error deleting charity organization');
-                    });
+            // Edit Charity Function
+            window.editCharity = function(charity) {
+                try {
+                    const charityData = typeof charity === 'string' ? JSON.parse(charity) : charity;
+                    
+                    // Set values in the form
+                    document.getElementById('editCharityId').value = charityData.id;
+                    document.getElementById('organizationName').value = charityData.organization_name;
+                    document.getElementById('email').value = charityData.email;
+                    document.getElementById('phoneNo').value = charityData.phone || '';
+                    
+                    // Show the modal
+                    document.getElementById('editModal').style.display = 'block';
+                } catch (error) {
+                    console.error('Error parsing charity data:', error);
+                    alert('Error loading charity details');
                 }
             }
 
-            // Close button functionality
-            document.querySelector('.close').addEventListener('click', function() {
-                document.getElementById('editModal').style.display = 'none';
-            });
+            // Close Modal Function
+            window.closeEditModal = function() {
+                editModal.style.display = 'none';
+            }
 
-            // Click outside modal to close
-            window.addEventListener('click', function(event) {
-                const modal = document.getElementById('editModal');
-                if (event.target == modal) {
-                    modal.style.display = 'none';
+            // Close modal when clicking on X
+            document.querySelector('.close').onclick = function() {
+                closeEditModal();
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                if (event.target == editModal) {
+                    closeEditModal();
                 }
-            });
+            }
 
-            // Form submission
+            // Handle form submission
             document.getElementById('editCharityForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 
                 const formData = new FormData(this);
                 formData.append('action', 'update_charity');
                 
-                fetch(window.location.href, {
+                // Log the data we're sending
+                console.log('Sending data:', Object.fromEntries(formData));
+                
+                // Make sure this path is correct
+                fetch('./handle_charity_updates.php', {  // Note the ./ for current directory
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.text())
-                .then(text => {
-                    try {
-                        return JSON.parse(text);
-                    } catch (e) {
-                        console.error('Raw server response:', text);
-                        throw new Error('Invalid server response');
+                .then(async response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
+                    const text = await response.text();
+                    console.log('Raw response:', text);
+                    return JSON.parse(text);
                 })
                 .then(data => {
+                    console.log('Parsed response:', data);
                     if (data.success) {
-                        alert(data.message);
+                        alert('Organization updated successfully');
                         window.location.reload();
                     } else {
-                        alert('Error: ' + data.message);
+                        throw new Error(data.message || 'Update failed');
                     }
                 })
                 .catch(error => {
@@ -897,73 +918,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 });
             });
 
-            // Handle campaign form submission
-            const addCampaignForm = document.getElementById('addCampaignForm');
-            if (addCampaignForm) {
-                addCampaignForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    // Validate form data
-                    const endDate = new Date(this.end_date.value);
-                    const today = new Date();
-                    
-                    if (endDate <= today) {
-                        alert('End date must be in the future');
-                        return;
-                    }
-                    
-                    const formData = new FormData(this);
-                    formData.append('action', 'create_campaign');
-                    
-                    fetch(window.location.href, {
+            // Add this delete function
+            window.deleteCharity = function(charityId) {
+                if (confirm('Are you sure you want to delete this charity? This action cannot be undone.')) {
+                    fetch('Charity_organisation_details.php', {
                         method: 'POST',
-                        body: formData
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'delete_charity',
+                            id: charityId
+                        })
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert('Campaign created successfully!');
-                            location.reload();
+                            alert('Charity deleted successfully');
+                            // Remove the row from the table
+                            const row = document.querySelector(`tr[data-id="${charityId}"]`);
+                            if (row) {
+                                row.remove();
+                            }
                         } else {
-                            alert('Error creating campaign: ' + (data.message || 'Unknown error'));
+                            alert('Error deleting charity: ' + (data.message || 'Unknown error'));
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('Error creating campaign. Please try again.');
+                        alert('Error deleting charity');
                     });
-                });
-            }
-
-            // Close modals when clicking outside
-            window.onclick = function(event) {
-                if (event.target == editModal || event.target == viewModal) {
-                    editModal.style.display = "none";
-                    viewModal.style.display = "none";
-                }
-            }
-
-            // Close buttons for modals
-            document.querySelectorAll('.close, .close-view').forEach(button => {
-                button.onclick = function() {
-                    editModal.style.display = "none";
-                    viewModal.style.display = "none";
-                }
-            });
-
-            // Close button
-            const closeBtn = document.querySelector('.close');
-            if (closeBtn) {
-                closeBtn.onclick = function() {
-                    document.getElementById('editModal').style.display = "none";
-                }
-            }
-
-            // Click outside modal
-            window.onclick = function(event) {
-                const modal = document.getElementById('editModal');
-                if (event.target == modal) {
-                    modal.style.display = "none";
                 }
             }
         });

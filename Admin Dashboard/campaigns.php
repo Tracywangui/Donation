@@ -1,14 +1,6 @@
 <?php
-$host = 'localhost';
-$username = 'root';
-$password = '';
-$database = 'donateconnect';
-
-$conn = mysqli_connect($host, $username, $password, $database);
-
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
-}
+session_start();
+require_once('C:/xampp/htdocs/IS project coding/db.php');
 
 // Fetch campaigns with charity organization details
 $query = "SELECT c.*, co.organization_name, u.username 
@@ -33,7 +25,6 @@ if (!$result) {
     <link href="../Donor Dashboard/donor.css" rel="stylesheet">
     <link href="../Charity_Organisation_Dashboard/charity.css" rel="stylesheet">
     <link href="admin.css" rel="stylesheet">
-    <script src="auth-check.js"></script>
 </head>
 
 <body>
@@ -44,18 +35,17 @@ if (!$result) {
         </div>
         <ul class="nav-links">
             <li class="nav-item">
-                <a href="admin_dashboard.php" class="nav-link" data-page="home">
+                <a href="admin_dashboard.php" class="nav-link">
                     <i class="fas fa-home"></i>
                     <span>Home</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="campaigns.php" class="nav-link active" data-page="campaigns">
+                <a href="campaigns.php" class="nav-link active">
                     <i class="fas fa-hand-holding-heart"></i>
                     <span>Campaigns</span>
                 </a>
             </li>
-            
         </ul>
         <div class="logout-container">
             <button class="logout-btn" id="logoutBtn">
@@ -65,17 +55,18 @@ if (!$result) {
         </div>
     </div>
 
+    <!-- Main Content -->
     <div class="main-content">
         <div class="top-bar">
             <div class="user-info">
                 <i class="fas fa-circle-user"></i>
-                <span class="user-name" id="username"></span>
+                <span class="user-name"><?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?></span>
             </div>
         </div>
 
         <div class="content-area">
             <h1>Campaign Management</h1>
-
+            
             <table class="campaigns-table">
                 <thead>
                     <tr>
@@ -88,65 +79,55 @@ if (!$result) {
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody id="campaignsTableBody">
-                    <?php
-                    if (mysqli_num_rows($result) > 0) {
-                        while ($campaign = mysqli_fetch_assoc($result)) {
-                            // Calculate progress
-                            $progress = 0;
-                            if ($campaign['goal'] > 0) {
-                                $donation_query = "SELECT COALESCE(SUM(amount), 0) as total 
-                                                 FROM donations 
-                                                 WHERE title = ?";
-                                
-                                $stmt = mysqli_prepare($conn, $donation_query);
-                                if ($stmt) {
-                                    mysqli_stmt_bind_param($stmt, 's', $campaign['title']);
-                                    mysqli_stmt_execute($stmt);
-                                    $donation_result = mysqli_stmt_get_result($stmt);
-                                    $donation_data = mysqli_fetch_assoc($donation_result);
-                                    $current_amount = $donation_data['total'];
-                                    $progress = ($current_amount / $campaign['goal']) * 100;
-                                    mysqli_stmt_close($stmt);
-                                } else {
-                                    $current_amount = 0;
-                                }
+                <tbody>
+                    <?php while ($campaign = mysqli_fetch_assoc($result)) { 
+                        // Calculate progress
+                        $progress = 0;
+                        if ($campaign['goal'] > 0) {
+                            $donation_query = "SELECT COALESCE(SUM(amount), 0) as total 
+                                             FROM donations 
+                                             WHERE campaign_id = ?";
+                            
+                            $stmt = mysqli_prepare($conn, $donation_query);
+                            if ($stmt) {
+                                mysqli_stmt_bind_param($stmt, 'i', $campaign['id']);
+                                mysqli_stmt_execute($stmt);
+                                $donation_result = mysqli_stmt_get_result($stmt);
+                                $donation_data = mysqli_fetch_assoc($donation_result);
+                                $current_amount = $donation_data['total'];
+                                $progress = ($current_amount / $campaign['goal']) * 100;
+                                mysqli_stmt_close($stmt);
                             }
-                            ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($campaign['title']); ?></td>
-                                <td><?php echo htmlspecialchars($campaign['organization_name']); ?></td>
-                                <td>Ksh <?php echo number_format($campaign['goal'], 2); ?></td>
-                                <td>
-                                    <div class="progress-bar-container">
-                                        <div class="progress-bar" style="width: <?php echo $progress; ?>%"></div>
-                                    </div>
-                                    <div><?php echo number_format($progress, 1); ?>% 
-                                         (Ksh <?php echo number_format($current_amount ?? 0, 2); ?>)</div>
-                                </td>
-                                <td><span class="status-badge status-<?php echo strtolower($campaign['status']); ?>">
-                                    <?php echo ucfirst($campaign['status']); ?></span></td>
-                                <td><?php echo $campaign['endDate']; ?></td>
-                                <td class="campaign-actions">
-                                    <button class="btn btn-view" onclick="viewCampaign(<?php echo $campaign['id']; ?>)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-toggle-status" 
-                                            onclick="toggleCampaignStatus(<?php echo $campaign['id']; ?>)"
-                                            title="<?php echo $campaign['status'] === 'active' ? 'Deactivate' : 'Activate'; ?> Campaign">
-                                        <i class="fas <?php echo $campaign['status'] === 'active' ? 'fa-pause' : 'fa-play'; ?>"></i>
-                                    </button>
-                                    <button class="btn btn-delete" onclick="deleteCampaign(<?php echo $campaign['id']; ?>)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <?php
                         }
-                    } else {
-                        echo "<tr><td colspan='7'>No campaigns found</td></tr>";
-                    }
                     ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($campaign['title']); ?></td>
+                            <td><?php echo htmlspecialchars($campaign['organization_name']); ?></td>
+                            <td>Ksh <?php echo number_format($campaign['goal'], 2); ?></td>
+                            <td>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: <?php echo $progress; ?>%"></div>
+                                </div>
+                                <div><?php echo number_format($progress, 1); ?>%</div>
+                            </td>
+                            <td><span class="status-badge status-<?php echo strtolower($campaign['status']); ?>">
+                                <?php echo ucfirst($campaign['status']); ?></span></td>
+                            <td><?php echo $campaign['endDate']; ?></td>
+                            <td class="campaign-actions">
+                                <button class="btn btn-view" onclick="viewCampaign(<?php echo $campaign['id']; ?>)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-toggle-status" 
+                                        onclick="toggleCampaignStatus(<?php echo $campaign['id']; ?>)"
+                                        title="<?php echo $campaign['status'] === 'active' ? 'Deactivate' : 'Activate'; ?> Campaign">
+                                    <i class="fas <?php echo $campaign['status'] === 'active' ? 'fa-pause' : 'fa-play'; ?>"></i>
+                                </button>
+                                <button class="btn btn-delete" onclick="deleteCampaign(<?php echo $campaign['id']; ?>)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    <?php } ?>
                 </tbody>
             </table>
         </div>
@@ -166,134 +147,116 @@ if (!$result) {
     </div>
 
     <script>
-        // Update campaign status via AJAX
-        function toggleCampaignStatus(id) {
-            showModal(
-                'Confirm Status Change',
-                'Are you sure you want to change the status of this campaign?',
-                () => {
-                    fetch('campaign_actions.php', {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup logout handler
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fetch('../logout.php', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            action: 'toggle_status',
-                            campaign_id: id
-                        })
+                        credentials: 'same-origin'
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert('Error updating campaign status');
-                        }
-                    });
-                }
-            );
-        }
-
-        // Delete campaign via AJAX
-        function deleteCampaign(id) {
-            showModal(
-                'Confirm Delete',
-                'Are you sure you want to delete this campaign? This action cannot be undone.',
-                () => {
-                    fetch('campaign_actions.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            action: 'delete',
-                            campaign_id: id
-                        })
+                    .then(() => {
+                        window.location.href = '../login.php';
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert('Error deleting campaign');
-                        }
-                    });
+                    .catch(error => console.error('Logout error:', error));
+                });
+            }
+
+            // Setup campaign action handlers
+            function handleCampaignAction(action, campaignId, successMessage) {
+                fetch('campaign_actions.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        campaign_id: campaignId
+                    }),
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert(successMessage);
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Action failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            }
+
+            // Campaign status toggle
+            window.toggleCampaignStatus = function(id) {
+                showModal(
+                    'Confirm Status Change',
+                    'Are you sure you want to change the status of this campaign?',
+                    () => handleCampaignAction('toggle_status', id, 'Status updated successfully')
+                );
+            }
+
+            // Campaign deletion
+            window.deleteCampaign = function(id) {
+                showModal(
+                    'Confirm Delete',
+                    'Are you sure you want to delete this campaign? This action cannot be undone.',
+                    () => handleCampaignAction('delete', id, 'Campaign deleted successfully')
+                );
+            }
+
+            // Modal functionality
+            const modal = document.getElementById('confirmationModal');
+            if (!modal) return;
+
+            const closeModal = () => {
+                modal.style.display = 'none';
+                window.currentActionCallback = null;
+            };
+
+            window.showModal = (title, message, callback) => {
+                const modalTitle = document.getElementById('modalTitle');
+                const modalMessage = document.getElementById('modalMessage');
+                if (modalTitle) modalTitle.textContent = title;
+                if (modalMessage) modalMessage.textContent = message;
+                window.currentActionCallback = callback;
+                modal.style.display = 'block';
+            };
+
+            // Modal close button
+            const modalClose = modal.querySelector('.modal-close');
+            if (modalClose) {
+                modalClose.onclick = closeModal;
+            }
+
+            // Close modal on outside click
+            window.onclick = (event) => {
+                if (event.target === modal) {
+                    closeModal();
                 }
-            );
-        }
+            };
 
-        // Modal functionality
-        const modal = document.getElementById('confirmationModal');
-        const modalClose = document.querySelector('.modal-close');
-        let currentActionCallback = null;
-
-        function showModal(title, message, callback) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').textContent = message;
-            currentActionCallback = callback;
-            modal.style.display = 'block';
-        }
-
-        function closeModal() {
-            modal.style.display = 'none';
-            currentActionCallback = null;
-        }
-
-        modalClose.onclick = closeModal;
-        window.onclick = (event) => {
-            if (event.target === modal) {
-                closeModal();
+            // Confirm button handler
+            const confirmButton = document.getElementById('confirmButton');
+            if (confirmButton) {
+                confirmButton.onclick = () => {
+                    if (window.currentActionCallback) {
+                        window.currentActionCallback();
+                    }
+                    closeModal();
+                };
             }
-        }
-
-        document.getElementById('confirmButton').onclick = () => {
-            if (currentActionCallback) {
-                currentActionCallback();
-            }
-            closeModal();
-        };
-
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', () => {
-            // Auth check
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            if (!isLoggedIn) {
-                window.location.href = 'campaigns.php';
-                return;
-            }
-
-            // Set username
-            const username = localStorage.getItem('username');
-            document.getElementById('username').textContent = username;
-
-            // Setup logout
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('username');
-                window.location.href = 'campaigns.php';
-            });
-
-            // Initialize campaigns table and controls
-            renderCampaigns(campaigns);
-            setupSearchAndFilter();
         });
-
-        // Add the setupSearchAndFilter function if it doesn't exist
-        function setupSearchAndFilter() {
-            const searchBox = document.querySelector('.search-box');
-            const filterSelect = document.querySelector('.filter-select');
-
-            if (searchBox) {
-                searchBox.addEventListener('input', filterCampaigns);
-            }
-            if (filterSelect) {
-                filterSelect.addEventListener('change', filterCampaigns);
-            }
-        }
-
-        function filterCampaigns() {
-            // Add your filter logic here
-        }
     </script>
 </body>
 

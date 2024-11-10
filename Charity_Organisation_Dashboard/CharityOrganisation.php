@@ -1,9 +1,10 @@
 <?php
 session_start();
+require_once('C:/xampp/htdocs/IS project coding/db.php');
 
 // Check if user is logged in
 if (!isset($_SESSION['charityUsername'])) {
-    header("Location: ../charity_login.php");
+    header('Location: ../charity_login.php');
     exit();
 }
 
@@ -19,7 +20,6 @@ $username = $_SESSION['charityUsername'];
     <title>DonateConnect - Charity Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="charity.css" rel="stylesheet">
-    <script src="auth-check.js"></script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -52,7 +52,6 @@ $username = $_SESSION['charityUsername'];
                     <span>Transactions</span>
                 </a>
             </li>
-            
             <li class="nav-item">
                 <a href="request_donation.php" class="nav-link" data-page="request-donation">
                     <i class="fas fa-hand-holding-usd"></i>
