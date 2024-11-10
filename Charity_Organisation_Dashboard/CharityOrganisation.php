@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+// Check if user is logged in
 if (!isset($_SESSION['charityUsername'])) {
     header("Location: ../charity_login.php");
     exit();

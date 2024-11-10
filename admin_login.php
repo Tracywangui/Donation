@@ -21,37 +21,34 @@ $errorMessage = "";
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Retrieve username and password from the form
-    $adminUsername = $_POST['username']; 
-    $adminPassword = $_POST['password'];
+    $username = $_POST['username'];
+    $password = $_POST['password'];
 
-    // Prepare SQL query to check the credentials
-    $sql = "SELECT * FROM users WHERE username = ? AND role = 'Admin'";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $adminUsername);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Use prepared statement to prevent SQL injection
+    $query = "SELECT * FROM users WHERE username = ?";
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, "s", $username);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 
-    // Check if the query returned any rows
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
+    if ($row = mysqli_fetch_assoc($result)) {
+        if (password_verify($password, $row['password'])) {
+            // Set session variables
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['user_id'] = $row['id'];
+            $_SESSION['logged_in'] = true;
 
-        // Debug: Output fetched user information (for troubleshooting)
-        var_dump($row); // Remove or comment out this line in production
-
-        // Verify the password
-        if (password_verify($adminPassword, $row['password'])) {
-            // Store the username in session and redirect to the admin dashboard
-            $_SESSION['adminUsername'] = $adminUsername;
-            header("Location: Admin Dashboard/admin_dashboard.php");
+            // Debug statement
+            error_log("Login successful for user: " . $row['username']);
+            
+            // Redirect to admin dashboard with absolute path
+            header("Location: ./Admin Dashboard/admin_dashboard.php");
             exit();
         } else {
-            // Invalid password
-            $errorMessage = "Invalid Username or Password!";
+            $error = "Invalid password";
         }
     } else {
-        // Invalid username
-        $errorMessage = "Invalid Username or Password!";
+        $error = "Invalid username";
     }
 
     $stmt->close();
@@ -59,7 +56,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 $conn->close();
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">

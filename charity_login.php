@@ -39,11 +39,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($charityPassword, $row['password'])) {
             $_SESSION['charityUsername'] = $charityUsername;
             
-            // Clear any output buffers
-            ob_clean();
-            
-            // Use relative path instead of absolute path
-            header("Location: Charity_Organisation_Dashboard/CharityOrganisation.php");
+            // Use relative URL path instead of file system path
+            header("Location: ./Charity_Organisation_Dashboard/CharityOrganisation.php");
             exit();
         } else {
             $errorMessage = "Invalid Username or Password!";
