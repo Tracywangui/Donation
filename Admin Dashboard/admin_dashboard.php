@@ -69,14 +69,14 @@ $monthly_growth_query = "
     FROM (
         SELECT COALESCE(SUM(amount), 0) as total 
         FROM donations 
-        WHERE MONTH(date) = MONTH(CURRENT_DATE)
-        AND YEAR(date) = YEAR(CURRENT_DATE)
+        WHERE MONTH(created_at) = MONTH(CURRENT_DATE)
+        AND YEAR(created_at) = YEAR(CURRENT_DATE)
     ) THIS_MONTH,
     (
         SELECT COALESCE(SUM(amount), 0) as total 
         FROM donations 
-        WHERE MONTH(date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)
-        AND YEAR(date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH)
+        WHERE MONTH(created_at) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)
+        AND YEAR(created_at) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH)
     ) LAST_MONTH";
 $growth_result = mysqli_query($conn, $monthly_growth_query);
 $monthly_growth = mysqli_fetch_assoc($growth_result)['growth_rate'];
@@ -90,10 +90,11 @@ $total_charity_orgs = mysqli_fetch_assoc($charity_orgs_result)['total'];
 $activities_query = "
     (SELECT 
         'donation' as type,
-        CONCAT('New donation of KSh ', amount, ' for ', title) as description,
-        date as activity_date
-    FROM donations
-    ORDER BY date DESC
+        CONCAT('New donation of KSh ', d.amount, ' for ', c.title) as description,
+        d.created_at as activity_date
+    FROM donations d
+    LEFT JOIN campaigns c ON d.campaign_id = c.id
+    ORDER BY d.created_at DESC
     LIMIT 5)
     UNION
     (SELECT 

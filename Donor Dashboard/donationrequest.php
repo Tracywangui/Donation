@@ -23,7 +23,7 @@ if ($conn->connect_error) {
 $donorUsername = $_SESSION['donorUsername'];
 
 // First get the user's ID and then find their donor ID
-$sql = "SELECT dr.* 
+$sql = "SELECT dr.*, u.username as donor_username 
         FROM donation_requests dr
         INNER JOIN donors d ON dr.donor_id = d.id
         INNER JOIN users u ON d.user_id = u.id
@@ -126,7 +126,7 @@ if(isset($_POST['action']) && isset($_POST['request_id'])) {
                                 <div class="request-meta">
                                     <span><i class="fas fa-user"></i> From: <?php echo htmlspecialchars($row['charity_username']); ?></span>
                                     <span><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($row['created_at']); ?></span>
-                                    <span><i class="fas fa-dollar-sign"></i> Amount: <?php echo htmlspecialchars($row['amount']); ?></span>
+                                    <span><i class="fas fa-dollar-sign"></i> Amount: KES <?php echo htmlspecialchars($row['amount']); ?></span>
                                 </div>
                             </div>
                             <span class="status-badge status-<?php echo strtolower($row['status']); ?>">
@@ -147,6 +147,12 @@ if(isset($_POST['action']) && isset($_POST['request_id'])) {
                                         <i class="fas fa-times"></i> Reject
                                     </button>
                                 </form>
+                            </div>
+                        <?php elseif($row['status'] === 'accepted'): ?>
+                            <div class="request-actions">
+                                <a href="donate.php" class="btn donate-btn">
+                                    <i class="fas fa-hand-holding-heart"></i> Donate Now
+                                </a>
                             </div>
                         <?php endif; ?>
                     </div>

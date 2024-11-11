@@ -55,7 +55,7 @@ $donorUsername = $_SESSION['donorUsername']; // Now this will have the value set
                 </a>
             </li>
             <li class="nav-item">
-                <a href="Transactions.php" class="nav-link" data-page="transactions">
+                <a href="transactions.php" class="nav-link" data-page="transactions">
                     <i class="fas fa-money-bill-wave"></i>
                     <span>Transactions</span>
                 </a>
@@ -67,10 +67,11 @@ $donorUsername = $_SESSION['donorUsername']; // Now this will have the value set
                     <span class="notification-badge" id="notificationCount">0</span>
                 </a>
             </li>
+            
         </ul>
         <div class="logout-container">
             <button class="logout-btn" id="logoutBtn">
-                <i class="fas fa-arrow-right-from-bracket"></i>
+                <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
             </button>
         </div>
@@ -95,7 +96,7 @@ $donorUsername = $_SESSION['donorUsername']; // Now this will have the value set
         // Logout handling
         document.getElementById('logoutBtn').addEventListener('click', () => {
             if(confirm('Are you sure you want to logout?')) {
-                window.location.href = '../donor_login.php'; // Redirect to logout script
+                window.location.href = '../logout.php'; // Changed to point to logout.php
             }
         });
     </script>

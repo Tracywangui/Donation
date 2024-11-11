@@ -1,60 +1,41 @@
 <?php
-// Start session
 session_start();
+require_once('db.php'); // Make sure this is included
 
-// Database connection variables
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "donateconnect";
-
-// Create connection to the MySQL database
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check the connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (isset($_SESSION['donorUsername'])) {
+    header("Location: Donor Dashboard/donor_dashboard.php");
+    exit();
 }
 
-// Initialize variables for error message
 $errorMessage = "";
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Retrieve username and password from the form
     $donorUsername = $_POST['username'];  
     $donorPassword = $_POST['password'];
 
-    // Prepare SQL query to check the credentials
     $sql = "SELECT * FROM users WHERE username = ? AND role = 'Donor'";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $donorUsername);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // Verify if donor exists
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        // Verify the password
         if (password_verify($donorPassword, $row['password'])) {
-            // Login success, set session variable
-            $_SESSION['donorUsername'] = $donorUsername; // Set the session variable
-            // Redirect to donor dashboard
+            $_SESSION['donorUsername'] = $donorUsername;
+            $_SESSION['donor_id'] = $row['id'];
+            
             header("Location: Donor Dashboard/donor_dashboard.php");
             exit();
         } else {
-            // Invalid password
             $errorMessage = "Invalid Username or Password!";
         }
     } else {
-        // Invalid username
         $errorMessage = "Invalid Username or Password!";
     }
-
     $stmt->close();
 }
-
-$conn->close();
 ?>
 
 <!DOCTYPE html>
