@@ -1,5 +1,7 @@
 <?php
 session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // Check if user is logged in
 if (!isset($_SESSION['charityUsername'])) {
@@ -7,45 +9,75 @@ if (!isset($_SESSION['charityUsername'])) {
     exit();
 }
 
-// Database connection
+// Get the logged-in username
+$charityUsername = $_SESSION['charityUsername'];
+
+// Database configuration
 $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "donateconnect";
 
+// Create a connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
+// Check the connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $donor_id = $_POST['donor_id'];
-    $amount = $_POST['amount'];
-    $description = $_POST['description'];
-    $title = $_POST['title'];
-    
-    // Insert the donation request into the database
-    $sql = "INSERT INTO donation_requests (donor_id, charity_username, title, amount, description, status, created_at) 
-            VALUES (?, ?, ?, ?, ?, 'pending', NOW())";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("issds", $donor_id, $_SESSION['charityUsername'], $title, $amount, $description);
-    
-    if ($stmt->execute()) {
-        $success_message = "Donation request sent successfully!";
-    } else {
-        $error_message = "Error sending request: " . $conn->error;
+// Fetch all donors from the donors table
+$donors_query = "SELECT d.user_id, u.email, u.firstname, u.lastname 
+                 FROM donors d 
+                 JOIN users u ON d.user_id = u.id";
+$donors_result = $conn->query($donors_query);
+$donors = [];
+if ($donors_result->num_rows > 0) {
+    while($row = $donors_result->fetch_assoc()) {
+        $donors[] = $row;
     }
 }
 
-// Fetch list of donors
-$sql = "SELECT id, email FROM donors ORDER BY email";
-$result = $conn->query($sql);
-$donors = [];
-while ($row = $result->fetch_assoc()) {
-    $donors[] = $row;
+// Process form submission
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    try {
+        // Validate form data
+        if (!isset($_POST['amount']) || !isset($_POST['description']) || 
+            !isset($_POST['title']) || !isset($_POST['donor_id'])) {
+            throw new Exception("All fields are required");
+        }
+
+        $amount = filter_var($_POST['amount'], FILTER_VALIDATE_FLOAT);
+        $description = trim($_POST['description']);
+        $title = trim($_POST['title']);
+        $donor_id = filter_var($_POST['donor_id'], FILTER_VALIDATE_INT);
+
+        // Start transaction
+        $conn->begin_transaction();
+
+        // Insert the donation request
+        $insert_request = $conn->prepare("
+            INSERT INTO donation_requests 
+            (amount, charity_username, description, donor_id, title, status) 
+            VALUES (?, ?, ?, ?, ?, 'pending')
+        ");
+        
+        $insert_request->bind_param("dssis", $amount, $charityUsername, $description, $donor_id, $title);
+        
+        if (!$insert_request->execute()) {
+            throw new Exception("Failed to create donation request");
+        }
+
+        // Commit transaction
+        $conn->commit();
+        echo "<div class='alert alert-success'>Donation request created successfully!</div>";
+
+    } catch (Exception $e) {
+        if (isset($conn)) {
+            $conn->rollback();
+        }
+        echo "<div class='alert alert-danger'>Error: " . $e->getMessage() . "</div>";
+    }
 }
 ?>
 
@@ -72,24 +104,9 @@ while ($row = $result->fetch_assoc()) {
                     <span>Home</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="campaigns.php" class="nav-link" data-page="campaigns">
-                    <i class="fas fa-hand-holding-heart"></i>
-                    <span>Campaigns</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="donations.php" class="nav-link" data-page="donations">
-                    <i class="fas fa-gift"></i>
-                    <span>Donations</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="Transactions.php" class="nav-link " data-page="transactions">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    <span>Transactions</span>
-                </a>
-            </li>
+           
+            
+            
             
             <li class="nav-item">
                 <a href="request_donation.php" class="nav-link" data-page="request-donation">
@@ -136,8 +153,8 @@ while ($row = $result->fetch_assoc()) {
                     <select name="donor_id" id="donor" required>
                         <option value="">Choose a donor...</option>
                         <?php foreach ($donors as $donor): ?>
-                            <option value="<?php echo $donor['id']; ?>">
-                                <?php echo htmlspecialchars($donor['email']); ?>
+                            <option value="<?php echo htmlspecialchars($donor['user_id']); ?>">
+                                <?php echo htmlspecialchars($donor['firstname'] . ' ' . $donor['lastname'] . ' (' . $donor['email'] . ')'); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -179,7 +196,7 @@ while ($row = $result->fetch_assoc()) {
     </script>
 </body>
 </html>
-
 <?php
 $conn->close();
 ?>
+

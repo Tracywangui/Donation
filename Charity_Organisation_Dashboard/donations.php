@@ -26,20 +26,25 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Fetch donations from the database
-$sql = "SELECT d.id, d.title, u.firstname AS donor, d.date, d.amount, d.description, d.status 
+// Fetch donations from the database with the correct column names
+$sql = "SELECT d.*, c.title as campaign_title, u.firstname as donor_name
         FROM donations d
-        JOIN users u ON d.donor_id = u.id"; // Assuming a foreign key donor_id in donations table
-$result = $conn->query($sql);
+        JOIN users u ON d.donor_id = u.id
+        JOIN campaigns c ON d.campaign_id = c.id
+        JOIN charity_organizations co ON c.charity_id = co.id
+        JOIN users cu ON co.user_id = cu.id
+        WHERE cu.username = ?";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $charityUsername);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $donations = [];
 if ($result->num_rows > 0) {
-    // Output data of each row
     while($row = $result->fetch_assoc()) {
         $donations[] = $row;
     }
-} else {
-    $donations = [];
 }
 $conn->close();
 ?>
@@ -254,31 +259,14 @@ $conn->close();
                     <span>Home</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="campaigns.php" class="nav-link" data-page="campaigns">
-                    <i class="fas fa-hand-holding-heart"></i>
-                    <span>Campaigns</span>
-                </a>
-            </li>
+            
             <li class="nav-item">
                 <a href="donations.php" class="nav-link active" data-page="donations">
                     <i class="fas fa-gift"></i>
                     <span>Donations</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="Transactions.php" class="nav-link" data-page="transactions">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    <span>Transactions</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="Notifications.php" class="nav-link" data-page="notifications">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
-                    <span class="notification-badge" id="notificationCount">0</span>
-                </a>
-            </li>
+            
         </ul>
         <div class="logout-container">
             <button class="logout-btn" id="logoutBtn">
@@ -315,19 +303,26 @@ $conn->close();
                     <?php foreach ($donations as $donation): ?>
                         <div class="donation-card">
                             <div class="donation-info">
-                                <h3><?php echo htmlspecialchars($donation['title']); ?></h3>
+                                <h3><?php echo htmlspecialchars($donation['campaign_title']); ?></h3>
                                 <div class="donation-meta">
-                                    <span><i class="fas fa-user"></i> <?php echo htmlspecialchars($donation['donor']); ?></span>
-                                    <span><i class="fas fa-calendar"></i> <?php echo htmlspecialchars($donation['date']); ?></span>
-                                    <span><i class="fas fa-dollar-sign"></i> <?php echo htmlspecialchars($donation['amount']); ?></span>
+                                    <span><i class="fas fa-user"></i> <?php echo htmlspecialchars($donation['donor_name']); ?></span>
+                                    <span><i class="fas fa-calendar"></i> <?php echo htmlspecialchars(date('Y-m-d', strtotime($donation['created_at']))); ?></span>
+                                    <span><i class="fas fa-dollar-sign"></i> Ksh <?php echo htmlspecialchars(number_format($donation['amount'], 2)); ?></span>
+                                    <span><i class="fas fa-phone"></i> <?php echo htmlspecialchars($donation['phone']); ?></span>
                                 </div>
-                                <p class="donation-description"><?php echo htmlspecialchars($donation['description']); ?></p>
-                                <span class="status-badge <?php echo htmlspecialchars($donation['status']); ?>">
+                                <div class="donation-details">
+                                    <span><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($donation['email']); ?></span>
+                                    <span><i class="fas fa-receipt"></i> Reference: <?php echo htmlspecialchars($donation['reference']); ?></span>
+                                    <?php if ($donation['pesapal_transaction_id']): ?>
+                                        <span><i class="fas fa-hashtag"></i> Transaction ID: <?php echo htmlspecialchars($donation['pesapal_transaction_id']); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="status-badge <?php echo strtolower(htmlspecialchars($donation['status'])); ?>">
                                     <?php echo ucfirst(htmlspecialchars($donation['status'])); ?>
                                 </span>
                             </div>
                             <div class="donation-actions">
-                                <button class="view-details-btn">
+                                <button class="view-details-btn" onclick="viewDonationDetails(<?php echo $donation['id']; ?>)">
                                     <i class="fas fa-eye"></i> View Details
                                 </button>
                             </div>

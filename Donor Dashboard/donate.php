@@ -179,7 +179,7 @@ $result = mysqli_query($conn, $sql);
                         </div>
                     <?php endif; ?>
 
-                    <a href="make_donation.php?campaign_id=<?php echo $campaign['id']; ?>" class="donate-btn">
+                    <a href="../PAYPAGE/index.php?campaign_id=<?php echo $campaign['id']; ?>&charity_id=<?php echo $campaign['charity_id']; ?>&campaign_title=<?php echo urlencode($campaign['title']); ?>" class="donate-btn">
                         <i class="fas fa-heart"></i> Donate Now
                     </a>
                 </div>

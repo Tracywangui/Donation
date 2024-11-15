@@ -1,60 +1,44 @@
 <?php
-// Add these at the very top of the file
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Start session
 session_start();
+require_once('db.php');
 
-// Database connection variables
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "donateconnect";
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Initialize error message
-$errorMessage = "";
-
-// Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $charityUsername = $_POST['username'];  
-    $charityPassword = $_POST['password'];
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    $password = $_POST['password'];
 
-    $sql = "SELECT * FROM users WHERE username = ? AND role = 'Charity'";
+    $sql = "SELECT id, username, password, organization_name, role 
+            FROM users 
+            WHERE username = ? AND role = 'charity'";
+            
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $charityUsername);
+    $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    if ($result->num_rows > 0) {
+    if ($result->num_rows == 1) {
         $row = $result->fetch_assoc();
-        if (password_verify($charityPassword, $row['password'])) {
-            $_SESSION['charityUsername'] = $charityUsername;
+        
+        if (password_verify($password, $row['password'])) {
+            // Set session variables
+            $_SESSION['charityUsername'] = $row['username'];
+            $_SESSION['charityId'] = $row['id'];
+            $_SESSION['organizationName'] = $row['organization_name'];
+            $_SESSION['userRole'] = $row['role'];
+            $_SESSION['isLoggedIn'] = true;
             
-            // Use relative URL path instead of file system path
-            header("Location: ./Charity_Organisation_Dashboard/CharityOrganisation.php");
+            // Updated path to match your exact file structure
+            header("Location: Charity_Organisation_Dashboard/CharityOrganisation.php");
             exit();
         } else {
-            $errorMessage = "Invalid Username or Password!";
+            $error = "Invalid password";
         }
     } else {
-        $errorMessage = "Invalid Username or Password!";
+        $error = "Invalid username or not a charity account";
     }
-    $stmt->close();
 }
-
-$conn->close();
-
-// Move the HTML output after all PHP processing
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

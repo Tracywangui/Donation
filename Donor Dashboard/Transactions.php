@@ -25,18 +25,12 @@
             </li>
             
             <li class="nav-item">
-                <a href="Transactions.html" class="nav-link active" data-page="transactions">
+                <a href="transactions.php" class="nav-link active" data-page="transactions">
                     <i class="fas fa-money-bill-wave"></i>
                     <span>Transactions</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="notifications.html" class="nav-link" data-page="notifications">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
-                    <span class="notification-badge" id="notificationCount">0</span>
-                </a>
-            </li>
+            
         </ul>
         <div class="logout-container">
             <button class="logout-btn" id="logoutBtn">

@@ -1,17 +1,19 @@
 <?php
 session_start();
-require_once('C:/xampp/htdocs/IS project coding/db.php');
 
 // Check if user is logged in
-if (!isset($_SESSION['charityUsername'])) {
-    header('Location: ../charity_login.php');
+if (!isset($_SESSION['isLoggedIn']) || $_SESSION['userRole'] !== 'charity') {
+    header("Location: ../charity_login.php");
     exit();
 }
+
+
+// If we get here, user is logged in
+error_log("Charity user logged in successfully: " . $_SESSION['charityUsername']);
 
 // Get the username from session
 $username = $_SESSION['charityUsername'];
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -119,7 +121,7 @@ $username = $_SESSION['charityUsername'];
                 switch(page) {
                     case 'home':
                         contentArea.innerHTML = `
-                            <h2>Welcome to Donor Connect Dashboard</h2>
+                            <h2>Welcome to Donate Connect Dashboard</h2>
                             <p>Select a menu option to get started.</p>
                         `;
                         break;
@@ -137,3 +139,4 @@ $username = $_SESSION['charityUsername'];
     </script>
 </body>
 </html>
+

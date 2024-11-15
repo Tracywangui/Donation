@@ -107,6 +107,40 @@ $activities_query = "
     ORDER BY activity_date DESC
     LIMIT 10";
 $activities_result = mysqli_query($conn, $activities_query);
+
+// Add these new queries right before the closing PHP tag
+$donations_per_donor_query = "
+    SELECT d.donor_id, 
+           CONCAT(u.firstname, ' ', u.lastname) as donor_name,
+           SUM(d.amount) as total_amount 
+    FROM donations d
+    JOIN donors dn ON d.donor_id = dn.id
+    JOIN users u ON dn.user_id = u.id
+    WHERE u.role = 'donor'
+    GROUP BY d.donor_id
+    ORDER BY total_amount DESC
+    LIMIT 5";
+$donations_per_donor_result = mysqli_query($conn, $donations_per_donor_query);
+
+$donations_per_campaign_query = "
+    SELECT c.title as campaign_name, SUM(d.amount) as total_amount 
+    FROM donations d
+    JOIN campaigns c ON d.campaign_id = c.id
+    GROUP BY d.campaign_id
+    ORDER BY total_amount DESC
+    LIMIT 5";
+$donations_per_campaign_result = mysqli_query($conn, $donations_per_campaign_query);
+
+$donations_per_charity_query = "
+    SELECT co.organization_name as charity_name, 
+           SUM(d.amount) as total_amount 
+    FROM donations d
+    JOIN campaigns c ON d.campaign_id = c.id
+    JOIN charity_organizations co ON c.charity_id = co.id
+    GROUP BY co.id, co.organization_name
+    ORDER BY total_amount DESC
+    LIMIT 5";
+$donations_per_charity_result = mysqli_query($conn, $donations_per_charity_query);
 ?>
 
 <!DOCTYPE html>
@@ -115,11 +149,11 @@ $activities_result = mysqli_query($conn, $activities_query);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donor Connect - Admin Dashboard</title>
+    <title>Donate Connect - Admin Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="../Charity_Organisation_Dashboard/charity.css" rel="stylesheet">
     <link href="admin.css" rel="stylesheet">
-    <script src="auth-check.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -208,17 +242,7 @@ $activities_result = mysqli_query($conn, $activities_query);
                     <h3>Total Donations</h3>
                     <div class="number" id="totalDonations"><?php echo formatCurrency($total_donations); ?></div>
                 </div>
-                <div class="stat-card">
-                    <i class="fas fa-chart-line icon"></i>
-                    <h3>Monthly Growth</h3>
-                    <div class="number" id="monthlyGrowth"><?php echo number_format($monthly_growth, 1) . '%'; ?></div>
-                </div>
-            </div>
-
-            <!-- Add a graph for monthly donations -->
-            <div class="monthly-donations-chart">
-                <h3>Monthly Donations Trend</h3>
-                <canvas id="donationsChart"></canvas>
+                
             </div>
 
             <!-- Recent Activities Section -->
@@ -256,119 +280,131 @@ $activities_result = mysqli_query($conn, $activities_query);
                     ?>
                 </div>
             </div>
+
+            <div class="analytics-section">
+                <h3>Donation Analytics</h3>
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3>Top Donors</h3>
+                        <canvas id="donorsChart" width="90" height="80"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Top Campaigns</h3>
+                        <canvas id="campaignsChart" width="90" height="80"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Donations by Charity</h3>
+                        <canvas id="charitiesChart" width="90" height="80"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
-            e.preventDefault(); // Prevent default link behavior
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = 'admin_dashboard.php?action=logout';
-            }
-        });
+        // Wait for the DOM to be fully loaded
+        window.onload = function() {
+            // Chart Data
+            <?php
+            // Reset the result pointers
+            mysqli_data_seek($donations_per_donor_result, 0);
+            mysqli_data_seek($donations_per_campaign_result, 0);
+            mysqli_data_seek($donations_per_charity_result, 0);
+            
+            // Fetch all the data
+            $donor_data = mysqli_fetch_all($donations_per_donor_result, MYSQLI_ASSOC);
+            $campaign_data = mysqli_fetch_all($donations_per_campaign_result, MYSQLI_ASSOC);
+            $charity_data = mysqli_fetch_all($donations_per_charity_result, MYSQLI_ASSOC);
+            ?>
 
-        // Other JavaScript functionalities remain unchanged...
-
-        document.getElementById('registrationForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (password !== confirmPassword) {
-                alert('Passwords do not match!');
-                return;
-            }
-
-            // Get form data
-            const formData = {
-                organisation: document.querySelector('input[name="organisation"]').value,
-                email: document.querySelector('input[name="email"]').value,
-                phoneNo: document.querySelector('input[name="phoneNo"]').value,
-                username: document.querySelector('input[name="username"]').value,
-                registrationDate: new Date().toISOString(),
-            };
-
-            // Get existing donors from localStorage or initialize empty array
-            const existingDonors = JSON.parse(localStorage.getItem('registeredDonors') || '[]');
-
-            // Add new donor
-            existingDonors.push(formData);
-
-            // Save updated donors list
-            localStorage.setItem('registeredDonors', JSON.stringify(existingDonors));
-
-            // Add to activity log
-            const activities = JSON.parse(localStorage.getItem('activities') || '[]');
-            activities.unshift({
-                type: 'registration',
-                description: `New donor registration: ${formData.organisation}`,
-                timestamp: new Date().toISOString()
-            });
-            localStorage.setItem('activities', JSON.stringify(activities));
-
-            // Redirect to login page
-            window.location.href = '../admin_login.php';
-        });
-
-        function updateDashboardStats() {
+            // Create the charts
             try {
-                // Get registered donors from localStorage
-                const donors = JSON.parse(localStorage.getItem('registeredDonors') || '[]');
+                // Donors Chart
+                const donorsCtx = document.getElementById('donorsChart');
+                if (donorsCtx) {
+                    new Chart(donorsCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: <?php echo json_encode(array_column($donor_data, 'donor_name')); ?>,
+                            datasets: [{
+                                label: 'Total Donations (KSh)',
+                                data: <?php echo json_encode(array_column($donor_data, 'total_amount')); ?>,
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
 
-                // Update total donors count
-                document.getElementById('totalDonors').textContent = donors.length.toLocaleString();
+                // Campaigns Chart
+                const campaignsCtx = document.getElementById('campaignsChart');
+                if (campaignsCtx) {
+                    new Chart(campaignsCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: <?php echo json_encode(array_column($campaign_data, 'campaign_name')); ?>,
+                            datasets: [{
+                                data: <?php echo json_encode(array_column($campaign_data, 'total_amount')); ?>,
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.8)',
+                                    'rgba(54, 162, 235, 0.8)',
+                                    'rgba(255, 206, 86, 0.8)',
+                                    'rgba(75, 192, 192, 0.8)',
+                                    'rgba(153, 102, 255, 0.8)'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true
+                        }
+                    });
+                }
 
-                // Calculate daily growth rate
-                const today = new Date().toISOString().split('T')[0];
-                const todayDonors = donors.filter(donor => {
-                    const donorDate = new Date(donor.registrationDate || donor.registeredDate).toISOString().split('T')[0];
-                    return donorDate === today;
-                }).length;
-
-                const growthRate = donors.length > 0
-                    ? ((todayDonors / donors.length) * 100).toFixed(1)
-                    : 0;
-
-                document.getElementById('monthlyGrowth').textContent = `${growthRate}%`;
-
-                // Update recent activity
-                updateRecentActivity();
-
+                // Charities Chart
+                const charitiesCtx = document.getElementById('charitiesChart');
+                if (charitiesCtx) {
+                    new Chart(charitiesCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: <?php echo json_encode(array_column($charity_data, 'charity_name')); ?>,
+                            datasets: [{
+                                data: <?php echo json_encode(array_column($charity_data, 'total_amount')); ?>,
+                                backgroundColor: [
+                                    'rgba(255, 159, 64, 0.8)',
+                                    'rgba(75, 192, 192, 0.8)',
+                                    'rgba(54, 162, 235, 0.8)',
+                                    'rgba(153, 102, 255, 0.8)',
+                                    'rgba(255, 99, 132, 0.8)'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true
+                        }
+                    });
+                }
             } catch (error) {
-                console.error('Error updating dashboard:', error);
-                showError('Failed to update dashboard data');
+                console.error('Error creating charts:', error);
             }
-        }
 
-        function updateRecentActivity() {
-            const activityList = document.getElementById('activityList');
-
-            try {
-                const donors = JSON.parse(localStorage.getItem('registeredDonors') || '[]');
-                const activities = donors.map(donor => ({
-                    type: 'registration',
-                    description: `New donor registration: ${donor.organisation}`,
-                    timestamp: donor.registrationDate,
-                })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-                // Clear existing activities
-                activityList.innerHTML = '';
-
-                activities.forEach(activity => {
-                    const activityItem = document.createElement('div');
-                    activityItem.classList.add('activity-item');
-                    activityItem.textContent = `${activity.description} - ${new Date(activity.timestamp).toLocaleString()}`;
-                    activityList.appendChild(activityItem);
-                });
-            } catch (error) {
-                console.error('Error updating recent activity:', error);
-                activityList.innerHTML = '<p>Error loading activity.</p>';
+            // Logout button handler
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.onclick = function(e) {
+                    e.preventDefault();
+                    if (confirm('Are you sure you want to logout?')) {
+                        window.location.href = 'admin_dashboard.php?action=logout';
+                    }
+                };
             }
-        }
-
-        // Initial dashboard update
-        updateDashboardStats();
+        };
     </script>
 </body>
 

@@ -31,7 +31,17 @@ $campaigns = [];
 $message = "";
 
 // Fetch campaigns
-$result = $conn->query("SELECT * FROM campaigns WHERE charity_id = (SELECT id FROM users WHERE username = '$charityUsername')");
+$stmt = $conn->prepare("
+    SELECT c.* 
+    FROM campaigns c
+    JOIN charity_organizations co ON c.charity_id = co.id
+    JOIN users u ON co.user_id = u.id
+    WHERE u.username = ?
+");
+$stmt->bind_param("s", $charityUsername);
+$stmt->execute();
+$result = $stmt->get_result();
+
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $campaigns[] = $row;
@@ -46,11 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $endDate = $_POST['endDate'];
     $status = 'active'; // Default status for new campaigns
 
-    // Fetch the charity ID based on the session username
-    $charity_id_result = $conn->query("SELECT id FROM users WHERE username = '$charityUsername'");
-    if ($charity_id_result && $charity_id_result->num_rows > 0) {
-        $charity_id = $charity_id_result->fetch_assoc()['id'];
+    // Fetch the charity ID from charity_organizations table using the username
+    $charity_id_query = "SELECT co.id as charity_id 
+                        FROM charity_organizations co 
+                        JOIN users u ON co.user_id = u.id 
+                        WHERE u.username = ?";
+    $stmt = $conn->prepare($charity_id_query);
+    $stmt->bind_param("s", $charityUsername);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        $charity_id = $result->fetch_assoc()['charity_id'];
         
+        // Debug: Print the charity_id you're trying to use
+        echo "Attempting to use charity_id: " . $charity_id;
+
         // Updated INSERT query to include all necessary fields
         $stmt = $conn->prepare("INSERT INTO campaigns (charity_id, title, description, goal, endDate, createdAt, updatedAt, status) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)");
         $stmt->bind_param("issdss", $charity_id, $title, $description, $goal, $endDate, $status);
@@ -63,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             die("Error adding campaign: " . $stmt->error);
         }
     } else {
-        die("Charity ID not found for username: " . htmlspecialchars($charityUsername));
+        die("Charity organization not found for username: " . htmlspecialchars($charityUsername));
     }
 }
 

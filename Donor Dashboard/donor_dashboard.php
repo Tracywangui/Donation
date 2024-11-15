@@ -60,13 +60,7 @@ $donorUsername = $_SESSION['donorUsername']; // Now this will have the value set
                     <span>Transactions</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="Notifications.php" class="nav-link" data-page="notifications">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
-                    <span class="notification-badge" id="notificationCount">0</span>
-                </a>
-            </li>
+            
             
         </ul>
         <div class="logout-container">

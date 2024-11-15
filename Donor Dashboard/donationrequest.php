@@ -150,7 +150,7 @@ if(isset($_POST['action']) && isset($_POST['request_id'])) {
                             </div>
                         <?php elseif($row['status'] === 'accepted'): ?>
                             <div class="request-actions">
-                                <a href="donate.php" class="btn donate-btn">
+                                <a href="make_donation.php?request_id=<?php echo $row['id']; ?>" class="btn donate-btn">
                                     <i class="fas fa-hand-holding-heart"></i> Donate Now
                                 </a>
                             </div>
@@ -165,6 +165,33 @@ if(isset($_POST['action']) && isset($_POST['request_id'])) {
             <?php endif; ?>
         </div>
     </div>
+    <style>
+/* Add or update these styles */
+.donate-btn {
+    background-color: #2196f3;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.donate-btn:hover {
+    background-color: #1976d2;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.donate-btn i {
+    font-size: 1.1em;
+}
+</style>
 
     <script>
         // Optional: Add confirmation before accepting/rejecting
