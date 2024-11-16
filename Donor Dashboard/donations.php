@@ -26,11 +26,13 @@ if ($conn->connect_error) {
 // Debug query
 $donor_id = $_SESSION['donor_id'];
 
-$query = "SELECT d.*, c.title as campaign_name, co.organization_name as charity_name 
+$query = "SELECT d.*, c.title as campaign_name, co.organization_name as charity_name,
+          d.reference, d.stripe_payment_status, d.phone 
           FROM donations d
           LEFT JOIN campaigns c ON d.campaign_id = c.id
           LEFT JOIN charity_organizations co ON c.charity_id = co.user_id
-          WHERE d.donor_id = ?";
+          WHERE d.donor_id = ?
+          ORDER BY d.created_at DESC";
 
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $donor_id);
@@ -86,31 +88,36 @@ $result = $stmt->get_result();
         </div>
 
         <div class="donations-container">
-            <?php 
-            if ($result && $result->num_rows > 0) {
-                while($row = $result->fetch_assoc()) {
-                    ?>
-                    <div class="donation-card">
-                        <div class="donation-header">
-                            <h3><?php echo htmlspecialchars($row['charity_name']); ?></h3>
-                            <span class="amount">Ksh <?php echo number_format($row['amount'], 2); ?></span>
-                        </div>
-                        <div class="donation-details">
-                            <p>Campaign: <?php echo htmlspecialchars($row['campaign_name']); ?></p>
-                            <p>Date: <?php echo date('F j, Y', strtotime($row['created_at'])); ?></p>
-                            <p>Status: <?php echo htmlspecialchars($row['status']); ?></p>
-                        </div>
-                    </div>
-                    <?php
-                }
-            } else {
-                ?>
+            <?php if ($result && $result->num_rows > 0) { ?>
+                <table class="donations-table">
+                    <thead>
+                        <tr>
+                            <th>Campaign</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Reference</th>
+                            <th>Payment Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while($row = $result->fetch_assoc()) { ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['campaign_name'] ?? ''); ?></td>
+                                <td>Ksh <?php echo number_format($row['amount'], 2); ?></td>
+                                <td><?php echo date('F j, Y', strtotime($row['created_at'])); ?></td>
+                                <td><?php echo htmlspecialchars($row['status'] ?? ''); ?></td>
+                                <td><?php echo htmlspecialchars($row['reference'] ?? ''); ?></td>
+                                <td><?php echo htmlspecialchars($row['stripe_payment_status'] ?? ''); ?></td>
+                            </tr>
+                        <?php } ?>
+                    </tbody>
+                </table>
+            <?php } else { ?>
                 <div class="no-donations">
                     <p>You haven't made any donations yet.</p>
                 </div>
-                <?php
-            }
-            ?>
+            <?php } ?>
         </div>
     </div>
 

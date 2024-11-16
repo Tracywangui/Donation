@@ -286,15 +286,15 @@ $donations_per_charity_result = mysqli_query($conn, $donations_per_charity_query
                 <div class="charts-container">
                     <div class="chart-card">
                         <h3>Top Donors</h3>
-                        <canvas id="donorsChart" width="90" height="80"></canvas>
+                        <canvas id="donorsChart" width="700" height="800"></canvas>
                     </div>
                     <div class="chart-card">
                         <h3>Top Campaigns</h3>
-                        <canvas id="campaignsChart" width="90" height="80"></canvas>
+                        <canvas id="campaignsChart" width="700" height="800"></canvas>
                     </div>
                     <div class="chart-card">
                         <h3>Donations by Charity</h3>
-                        <canvas id="charitiesChart" width="90" height="80"></canvas>
+                        <canvas id="charitiesChart" width="700" height="800"></canvas>
                     </div>
                 </div>
             </div>
@@ -334,6 +334,7 @@ $donations_per_charity_result = mysqli_query($conn, $donations_per_charity_query
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             scales: {
                                 y: {
                                     beginAtZero: true
@@ -362,7 +363,8 @@ $donations_per_charity_result = mysqli_query($conn, $donations_per_charity_query
                             }]
                         },
                         options: {
-                            responsive: true
+                            responsive: true,
+                            maintainAspectRatio: false
                         }
                     });
                 }
@@ -386,7 +388,8 @@ $donations_per_charity_result = mysqli_query($conn, $donations_per_charity_query
                             }]
                         },
                         options: {
-                            responsive: true
+                            responsive: true,
+                            maintainAspectRatio: false
                         }
                     });
                 }

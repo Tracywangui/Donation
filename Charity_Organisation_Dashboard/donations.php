@@ -1,7 +1,6 @@
 <?php
 session_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once '../db.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['charityUsername'])) {
@@ -9,45 +8,75 @@ if (!isset($_SESSION['charityUsername'])) {
     exit();
 }
 
-// Get the logged-in username
-$charityUsername = $_SESSION['charityUsername'];
+$loggedInUsername = $_SESSION['charityUsername'];
 
-// Database configuration
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "donateconnect";
+// First get the charity organization's ID
+$charityQuery = "SELECT co.id as charity_id 
+                 FROM charity_organizations co
+                 JOIN users u ON co.user_id = u.id
+                 WHERE u.username = ?";
 
-// Create a connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+$stmt = $conn->prepare($charityQuery);
+$stmt->bind_param("s", $loggedInUsername);
+$stmt->execute();
+$charityResult = $stmt->get_result();
+$charityData = $charityResult->fetch_assoc();
 
-// Check the connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!$charityData) {
+    die("Charity organization not found");
 }
 
-// Fetch donations from the database with the correct column names
-$sql = "SELECT d.*, c.title as campaign_title, u.firstname as donor_name
-        FROM donations d
-        JOIN users u ON d.donor_id = u.id
-        JOIN campaigns c ON d.campaign_id = c.id
-        JOIN charity_organizations co ON c.charity_id = co.id
-        JOIN users cu ON co.user_id = cu.id
-        WHERE cu.username = ?";
+$charityId = $charityData['charity_id'];
 
+// Now fetch transactions for this charity
+$sql = "SELECT t.id, 
+               t.amount,
+               t.created_at,
+               t.payment_method,
+               t.status,
+               CONCAT(u.firstname, ' ', u.lastname) as donor_name,
+               c.title as campaign_name
+        FROM transactions t
+        LEFT JOIN campaigns c ON t.charity_id = c.id
+        LEFT JOIN donors d ON t.donor_id = d.id
+        LEFT JOIN users u ON d.user_id = u.id
+        WHERE c.charity_id = ?
+        ORDER BY t.created_at DESC";
+        
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $charityUsername);
+$stmt->bind_param("i", $charityId);
 $stmt->execute();
 $result = $stmt->get_result();
-
 $donations = [];
+
 if ($result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
-        $donations[] = $row;
+        $donations[] = [
+            'id' => $row['id'],
+            'type' => 'incoming',
+            'amount' => $row['amount'],
+            'donor_name' => $row['donor_name'] ?? 'Anonymous',
+            'created_at' => $row['created_at'],
+            'status' => $row['status'],
+            'campaign_title' => $row['campaign_name'] ?? 'General Donation',
+            'reference' => 'TRX' . str_pad($row['id'], 6, '0', STR_PAD_LEFT),
+            'payment_method' => $row['payment_method'],
+            'stripe_payment_status' => $row['status'],
+            'phone' => $row['phone'] ?? 'N/A',
+            'email' => $row['email'] ?? 'N/A'
+        ];
     }
 }
+
+// Initialize $donations as empty array if no results
+if (!isset($donations)) {
+    $donations = [];
+}
+
+// Close the database connection
 $conn->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -244,6 +273,64 @@ $conn->close();
         .user-name {
             margin-left: 0.5rem;
         }
+
+        .donations-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .donations-table th,
+        .donations-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .donations-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .donations-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .view-details-btn {
+            padding: 6px 12px;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-badge.accepted {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-badge.denied {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-badge.pending {
+            background-color: #fef3c7;
+            color: #a16207;
+        }
     </style>
 </head>
 <body>
@@ -260,12 +347,7 @@ $conn->close();
                 </a>
             </li>
             
-            <li class="nav-item">
-                <a href="donations.php" class="nav-link active" data-page="donations">
-                    <i class="fas fa-gift"></i>
-                    <span>Donations</span>
-                </a>
-            </li>
+           
             
         </ul>
         <div class="logout-container">
@@ -280,7 +362,7 @@ $conn->close();
         <div class="top-bar">
             <div class="user-info">
                 <i class="fas fa-user"></i>
-                <span class="user-name" id="username"><?php echo htmlspecialchars($charityUsername); ?></span>
+                <span class="user-name"><?php echo htmlspecialchars($loggedInUsername); ?></span>
             </div>
         </div>
         <div class="content-area">
@@ -300,47 +382,46 @@ $conn->close();
                         <p>There are no donations matching your current filter.</p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($donations as $donation): ?>
-                        <div class="donation-card">
-                            <div class="donation-info">
-                                <h3><?php echo htmlspecialchars($donation['campaign_title']); ?></h3>
-                                <div class="donation-meta">
-                                    <span><i class="fas fa-user"></i> <?php echo htmlspecialchars($donation['donor_name']); ?></span>
-                                    <span><i class="fas fa-calendar"></i> <?php echo htmlspecialchars(date('Y-m-d', strtotime($donation['created_at']))); ?></span>
-                                    <span><i class="fas fa-dollar-sign"></i> Ksh <?php echo htmlspecialchars(number_format($donation['amount'], 2)); ?></span>
-                                    <span><i class="fas fa-phone"></i> <?php echo htmlspecialchars($donation['phone']); ?></span>
-                                </div>
-                                <div class="donation-details">
-                                    <span><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($donation['email']); ?></span>
-                                    <span><i class="fas fa-receipt"></i> Reference: <?php echo htmlspecialchars($donation['reference']); ?></span>
-                                    <?php if ($donation['pesapal_transaction_id']): ?>
-                                        <span><i class="fas fa-hashtag"></i> Transaction ID: <?php echo htmlspecialchars($donation['pesapal_transaction_id']); ?></span>
-                                    <?php endif; ?>
-                                </div>
-                                <span class="status-badge <?php echo strtolower(htmlspecialchars($donation['status'])); ?>">
-                                    <?php echo ucfirst(htmlspecialchars($donation['status'])); ?>
-                                </span>
-                            </div>
-                            <div class="donation-actions">
-                                <button class="view-details-btn" onclick="viewDonationDetails(<?php echo $donation['id']; ?>)">
-                                    <i class="fas fa-eye"></i> View Details
-                                </button>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+                    <table class="donations-table">
+                        <thead>
+                            <tr>
+                                <th>Campaign</th>
+                                <th>Donor</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Reference</th>
+                                <th>Payment Status</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($donations as $donation): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($donation['campaign_title']); ?></td>
+                                    <td><?php echo htmlspecialchars($donation['donor_name']); ?></td>
+                                    <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($donation['created_at']))); ?></td>
+                                    <td>Ksh <?php echo htmlspecialchars(number_format($donation['amount'], 2)); ?></td>
+                                    <td><?php echo htmlspecialchars($donation['phone']); ?></td>
+                                    <td><?php echo htmlspecialchars($donation['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($donation['reference']); ?></td>
+                                    <td><?php echo htmlspecialchars($donation['stripe_payment_status']); ?></td>
+                                    <td><span class="status-badge <?php echo strtolower(htmlspecialchars($donation['status'])); ?>">
+                                        <?php echo ucfirst(htmlspecialchars($donation['status'])); ?>
+                                    </span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 
     <script>
-        // Fetching username from local storage (assuming you store it when the user logs in)
-        document.getElementById('username').innerText = localStorage.getItem('username') || 'Guest';
-
         // Logout functionality
         document.getElementById('logoutBtn').addEventListener('click', function() {
-            localStorage.removeItem('username');
-            // Redirect to login page
             window.location.href = '../charity_login.php';
         });
 

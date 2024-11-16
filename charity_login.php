@@ -20,8 +20,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         if (password_verify($password, $row['password'])) {
             // Set session variables
-            $_SESSION['charityUsername'] = $row['username'];
-            $_SESSION['charityId'] = $row['id'];
+            $_SESSION['charityUsername'] = $username;
+            $_SESSION['charity_id'] = $row['id'];
             $_SESSION['organizationName'] = $row['organization_name'];
             $_SESSION['userRole'] = $row['role'];
             $_SESSION['isLoggedIn'] = true;

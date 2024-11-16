@@ -815,37 +815,36 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2.5rem;
-}
-
-.transactions-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-color);
+    margin-bottom: 20px;
 }
 
 .transaction-actions {
     display: flex;
-    gap: 1rem;
+    gap: 10px;
     align-items: center;
 }
 
+.filter-btn {
+    padding: 8px 16px;
+    border: 1px solid #dee2e6;
+    background-color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.filter-btn:hover {
+    background-color: #f8f9fa;
+}
+
 .search-container {
-    position: relative;
+    margin-left: 10px;
 }
 
 .search-input {
-    padding: 0.625rem 1rem;
-    border: 1px solid var(--gray-200);
-    border-radius: 8px;
-    width: 250px;
-    transition: var(--transition);
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--primary-light);
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    width: 200px;
 }
 
 .transaction-card {
@@ -1177,4 +1176,100 @@ body {
         width: 100%;
         justify-content: center;
     }
+}
+
+/* Table Styling */
+.transactions-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    margin: 20px 0;
+    background: transparent;
+    table-layout: fixed; /* This ensures consistent column widths */
+}
+
+.transactions-table th,
+.transactions-table td {
+    padding: 16px 30px; /* Increased horizontal padding */
+    background: white;
+    border: none;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Column specific widths with better spacing */
+.reference-col {
+    width: 12%;
+}
+
+.type-col {
+    width: 10%;
+}
+
+.amount-col {
+    width: 12%;
+}
+
+.donor-col {
+    width: 15%;
+}
+
+.campaign-col {
+    width: 22%;
+}
+
+.date-col {
+    width: 18%;
+}
+
+.status-col {
+    width: 11%;
+}
+
+/* Add visual separation between columns */
+.transactions-table td:not(:last-child),
+.transactions-table th:not(:last-child) {
+    border-right: 20px solid #f8f9fa; /* This creates visual spacing between columns */
+}
+
+/* Header styling */
+.transactions-table th {
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    padding-bottom: 20px;
+}
+
+/* Status badge styling */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* Amount formatting */
+.amount {
+    font-family: monospace;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Row styling */
+.transactions-table tbody tr {
+    margin-bottom: 8px;
+}
+
+/* Row hover effect */
+.transactions-table tbody tr:hover td {
+    background-color: #f8f9fa;
 }
