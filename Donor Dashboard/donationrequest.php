@@ -3,6 +3,7 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Redirect if the donor is not logged in
 if (!isset($_SESSION['donorUsername'])) {
     header("Location: ../donor_login.php");
     exit();
@@ -19,40 +20,59 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Get donor's username from session
+// Get the donor's username from session
 $donorUsername = $_SESSION['donorUsername'];
 
-// First get the user's ID and then find their donor ID
-$sql = "SELECT dr.*, u.username as donor_username 
-        FROM donation_requests dr
-        INNER JOIN donors d ON dr.donor_id = d.id
-        INNER JOIN users u ON d.user_id = u.id
-        WHERE u.username = ?";
-$stmt = $conn->prepare($sql);
+// Debug: Print the username
+echo "Current donor username: " . htmlspecialchars($donorUsername) . "<br>";
+
+// First get the donor's ID
+$donorIdQuery = "SELECT d.id 
+                 FROM donors d 
+                 INNER JOIN users u ON d.user_id = u.id 
+                 WHERE u.username = ?";
+$stmt = $conn->prepare($donorIdQuery);
 $stmt->bind_param("s", $donorUsername);
+$stmt->execute();
+$donorResult = $stmt->get_result();
+
+// Debug: Check if donor was found
+if ($donorResult->num_rows === 0) {
+    echo "No donor found with username: " . htmlspecialchars($donorUsername) . "<br>";
+    exit;
+}
+
+$donor = $donorResult->fetch_assoc();
+$donorId = $donor['id'];
+
+// Debug: Print the donor ID
+echo "Donor ID found: " . $donorId . "<br>";
+
+// Now fetch ALL donation requests
+$sql = "SELECT dr.*, u.username as charity_username 
+        FROM donation_requests dr
+        INNER JOIN users u ON dr.charity_username = u.username
+        WHERE dr.donor_id = ?";
+        
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $donorId);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Handle accept/reject actions
-if(isset($_POST['action']) && isset($_POST['request_id'])) {
-    $requestId = $_POST['request_id'];
-    $newStatus = ($_POST['action'] === 'accept') ? 'accepted' : 'rejected';
-    $currentTime = date('Y-m-d H:i:s');
-    
-    $updateSql = "UPDATE donation_requests dr
-                  INNER JOIN donors d ON dr.donor_id = d.id
-                  INNER JOIN users u ON d.user_id = u.id
-                  SET dr.status = ?, dr.updated_at = ?
-                  WHERE dr.id = ? AND u.username = ?";
-    $updateStmt = $conn->prepare($updateSql);
-    $updateStmt->bind_param("ssss", $newStatus, $currentTime, $requestId, $donorUsername);
-    
-    if($updateStmt->execute()) {
-        $message = "Request has been " . $newStatus;
-    } else {
-        $error = "Error updating request status";
+// Debug: Print the SQL query result
+echo "Number of requests found: " . $result->num_rows . "<br>";
+
+// Debug: Print all requests
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        echo "<pre>";
+        print_r($row);
+        echo "</pre>";
     }
 }
+
+// Close the database connection
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -117,7 +137,7 @@ if(isset($_POST['action']) && isset($_POST['request_id'])) {
         <?php endif; ?>
 
         <div class="requests-grid">
-            <?php if ($result->num_rows > 0): ?>
+            <?php if ($result && $result->num_rows > 0): ?>
                 <?php while($row = $result->fetch_assoc()): ?>
                     <div class="request-card">
                         <div class="request-header">
@@ -129,14 +149,14 @@ if(isset($_POST['action']) && isset($_POST['request_id'])) {
                                     <span><i class="fas fa-dollar-sign"></i> Amount: KES <?php echo htmlspecialchars($row['amount']); ?></span>
                                 </div>
                             </div>
-                            <span class="status-badge status-<?php echo strtolower($row['status']); ?>">
-                                <?php echo ucfirst($row['status']); ?>
+                            <span class="status-badge status-<?php echo strtolower($row['status'] ?? 'pending'); ?>">
+                                <?php echo ucfirst($row['status'] ?? 'Pending'); ?>
                             </span>
                         </div>
                         
                         <p class="request-description"><?php echo htmlspecialchars($row['description']); ?></p>
                         
-                        <?php if($row['status'] === 'pending' && $row['donor_username'] === $donorUsername): ?>
+                        <?php if($row['status'] === 'pending'): ?>
                             <div class="request-actions">
                                 <form method="POST" style="display: inline;">
                                     <input type="hidden" name="request_id" value="<?php echo $row['id']; ?>">
@@ -148,9 +168,9 @@ if(isset($_POST['action']) && isset($_POST['request_id'])) {
                                     </button>
                                 </form>
                             </div>
-                        <?php elseif($row['status'] === 'accepted'): ?>
+                        <?php elseif($row['status'] === 'accepted' && $row['donor_id'] == $donorId): ?>
                             <div class="request-actions">
-                                <a href="make_donation.php?request_id=<?php echo $row['id']; ?>" class="btn donate-btn">
+                                <a href="../PAYPAGE/index.php?request_id=<?php echo $row['id']; ?>" class="btn donate-btn">
                                     <i class="fas fa-hand-holding-heart"></i> Donate Now
                                 </a>
                             </div>
@@ -223,7 +243,3 @@ if(isset($_POST['action']) && isset($_POST['request_id'])) {
     </script>
 </body>
 </html>
-
-<?php
-$conn->close();
-?>

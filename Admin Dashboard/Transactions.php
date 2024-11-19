@@ -54,6 +54,10 @@ if (!$result) {
             background-color: #fff3e0;
             color: #f57c00;
         }
+.status-completed {
+            background-color: #c8e6c9;
+            color: #388e3c;
+        }
 
 .export-btn {
     padding: 8px 16px;

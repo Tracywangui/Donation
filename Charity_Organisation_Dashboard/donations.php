@@ -28,20 +28,20 @@ if (!$charityData) {
 
 $charityId = $charityData['charity_id'];
 
-// Now fetch transactions for this charity
-$sql = "SELECT t.id, 
-               t.amount,
-               t.created_at,
-               t.payment_method,
-               t.status,
-               CONCAT(u.firstname, ' ', u.lastname) as donor_name,
+// Now fetch donations for this charity
+$sql = "SELECT d.id, 
+               d.amount,
+               d.created_at,
+               d.status,
+               d.email as donor_email,
+               d.phone as donor_phone,
+               d.reference,
+               d.stripe_payment_status,
                c.title as campaign_name
-        FROM transactions t
-        LEFT JOIN campaigns c ON t.charity_id = c.id
-        LEFT JOIN donors d ON t.donor_id = d.id
-        LEFT JOIN users u ON d.user_id = u.id
+        FROM donations d
+        LEFT JOIN campaigns c ON d.campaign_id = c.id
         WHERE c.charity_id = ?
-        ORDER BY t.created_at DESC";
+        ORDER BY d.created_at DESC";
         
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $charityId);
@@ -53,17 +53,16 @@ if ($result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
         $donations[] = [
             'id' => $row['id'],
-            'type' => 'incoming',
             'amount' => $row['amount'],
-            'donor_name' => $row['donor_name'] ?? 'Anonymous',
+            'donor_name' => 'Anonymous',
             'created_at' => $row['created_at'],
             'status' => $row['status'],
             'campaign_title' => $row['campaign_name'] ?? 'General Donation',
-            'reference' => 'TRX' . str_pad($row['id'], 6, '0', STR_PAD_LEFT),
-            'payment_method' => $row['payment_method'],
-            'stripe_payment_status' => $row['status'],
-            'phone' => $row['phone'] ?? 'N/A',
-            'email' => $row['email'] ?? 'N/A'
+            'reference' => $row['reference'],
+            'payment_method' => 'Card',
+            'stripe_payment_status' => $row['stripe_payment_status'],
+            'phone' => $row['donor_phone'] ?? 'N/A',
+            'email' => $row['donor_email'] ?? 'N/A'
         ];
     }
 }

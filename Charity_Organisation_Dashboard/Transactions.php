@@ -3,44 +3,49 @@ session_start();
 require_once '../db.php';
 
 // Check if user is logged in
-if (!isset($_SESSION['charityUsername'])) {
+if (!isset($_SESSION['charityUsername']) || !isset($_SESSION['charity_id'])) {
     header("Location: ../charity_login.php");
     exit();
 }
 
+$charityId = $_SESSION['charity_id'];
 $loggedInUsername = $_SESSION['charityUsername'];
 
+// Fetch transactions
+$sql = "SELECT id, 
+               amount,
+               donor_id,
+               created_at,
+               status,
+               payment_method
+        FROM transactions 
+        WHERE charity_id = ?
+        ORDER BY created_at DESC";
 
-// Fetch transactions with donor names from users table and campaign titles
-$sql = "SELECT t.id, 
-               t.amount,
-               t.donor_id,
-               t.created_at,
-               t.payment_method,
-               t.status,
-               CONCAT(u.firstname, ' ', u.lastname) as donor_name,
-               c.title as campaign_name
-        FROM transactions t
-        LEFT JOIN donors d ON t.donor_id = d.id
-        LEFT JOIN users u ON d.user_id = u.id
-        LEFT JOIN campaigns c ON t.charity_id = c.id
-        ORDER BY t.created_at DESC";
-        
-$result = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $charityId);
+$stmt->execute();
+$result = $stmt->get_result();
+
 $transactions = [];
 
 if ($result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
+        // Generate a reference number using transaction ID
+        $reference = 'DON-' . str_pad($row['id'], 6, '0', STR_PAD_LEFT);
+        
         $transactions[] = [
             'id' => $row['id'],
             'type' => 'incoming',
             'amount' => $row['amount'],
-            'donor' => $row['donor_name'] ?? 'Anonymous',
+            'donor' => 'Anonymous',
             'date' => $row['created_at'],
             'status' => $row['status'],
-            'campaign' => $row['campaign_name'] ?? 'General Donation',
-            'reference' => 'TRX' . str_pad($row['id'], 6, '0', STR_PAD_LEFT),
-            'payment_method' => $row['payment_method']
+            'campaign' => 'General Donation',
+            'reference' => $reference,
+            'payment_method' => $row['payment_method'] ?? 'Card',
+            'phone' => 'N/A',
+            'email' => 'N/A'
         ];
     }
 }
@@ -51,7 +56,6 @@ $transactionsJson = json_encode($transactions);
 // Close the database connection
 $conn->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -472,3 +476,4 @@ $conn->close();
 </body>
 
 </html>
+
