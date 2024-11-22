@@ -55,7 +55,7 @@ $result = $stmt->get_result();
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo-container">
-            <div class="logo">Charity Dashboard</div>
+            <div class="logo">Donor Dashboard</div>
         </div>
         <ul class="nav-links">
             <li class="nav-item">
@@ -94,10 +94,10 @@ $result = $stmt->get_result();
             <div class="transactions-header">
                 <h2>Transactions</h2>
                 <div class="filters">
-                    <button class="filter-btn active">All</button>
-                    <button class="filter-btn">Pending</button>
-                    <button class="filter-btn">Completed</button>
-                    <input type="text" class="search-input" placeholder="Search transactions...">
+                    <button class="filter-btn active" onclick="filterTransactions('all')">All</button>
+                    <button class="filter-btn" onclick="filterTransactions('pending')">Pending</button>
+                    <button class="filter-btn" onclick="filterTransactions('completed')">Completed</button>
+                    <input type="text" class="search-input" placeholder="Search transactions..." oninput="searchTransactions()">
                 </div>
             </div>
 
@@ -427,6 +427,7 @@ $result = $stmt->get_result();
 
     <script>
     let currentTransactionData = null;
+    let currentFilter = 'all';
 
     function viewTransactionDetails(transactionId) {
         const modal = document.getElementById('transactionModal');
@@ -544,6 +545,51 @@ $result = $stmt->get_result();
         doc.text('DonateConnect', 105, pageHeight - 20, { align: 'center' });
 
         doc.save(`donation-invoice-${currentTransactionData.id}.pdf`);
+    }
+
+    function filterTransactions(filter) {
+        currentFilter = filter;
+        fetchTransactions();
+    }
+
+    function searchTransactions() {
+        const searchTerm = document.querySelector('.search-input').value.toLowerCase();
+        fetchTransactions(searchTerm);
+    }
+
+    function fetchTransactions(searchTerm = '') {
+        const url = `./get_transaction_details.php?filter=${currentFilter}&search=${encodeURIComponent(searchTerm)}`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                updateTransactionTable(data);
+            })
+            .catch(error => {
+                console.error('Error fetching transactions:', error);
+            });
+    }
+
+    function updateTransactionTable(data) {
+        const tbody = document.querySelector('.transactions-table tbody');
+        tbody.innerHTML = ''; // Clear existing rows
+
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="date-cell">${new Date(row.created_at).toLocaleDateString()}</td>
+                <td class="charity-cell">${row.charity_name}</td>
+                <td class="amount-cell">KSH ${parseFloat(row.amount).toFixed(2)}</td>
+                <td class="payment-cell">${row.payment_method}</td>
+                <td class="status-cell">
+                    <span class="status-badge ${row.status.toLowerCase()}">${row.status}</span>
+                </td>
+                <td class="action-cell">
+                    <button class="view-btn" onclick="viewTransactionDetails(${row.id})">View Details</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
     </script>
 

@@ -217,6 +217,54 @@ if (!$result) {
         console.log('jsPDF loaded:', typeof jsPDF !== 'undefined');
         console.log('autoTable loaded:', typeof jsPDF.API.autoTable !== 'undefined');
     });
+
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        const selectedStatus = this.value;
+        const rows = document.querySelectorAll('.donations-table tbody tr');
+
+        rows.forEach(row => {
+            const statusCell = row.querySelector('td:last-child .status-badge');
+            const status = statusCell ? statusCell.textContent.toLowerCase() : '';
+            const donorNameCell = row.querySelector('td:nth-child(3)'); // Donor Name
+            const organizationCell = row.querySelector('td:nth-child(6)'); // Organization
+            const donorName = donorNameCell ? donorNameCell.textContent.toLowerCase() : '';
+            const organization = organizationCell ? organizationCell.textContent.toLowerCase() : '';
+
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            const matchesStatus = (selectedStatus === 'all' || status.includes(selectedStatus));
+            const matchesSearch = (donorName.includes(searchTerm) || organization.includes(searchTerm));
+
+            if (matchesStatus && matchesSearch) {
+                row.style.display = ''; // Show the row
+            } else {
+                row.style.display = 'none'; // Hide the row
+            }
+        });
+    });
+
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.donations-table tbody tr');
+
+        rows.forEach(row => {
+            const donorNameCell = row.querySelector('td:nth-child(3)'); // Donor Name
+            const organizationCell = row.querySelector('td:nth-child(6)'); // Organization
+            const donorName = donorNameCell ? donorNameCell.textContent.toLowerCase() : '';
+            const organization = organizationCell ? organizationCell.textContent.toLowerCase() : '';
+
+            const selectedStatus = document.getElementById('statusFilter').value;
+
+            const matchesStatus = (selectedStatus === 'all' || row.querySelector('td:last-child .status-badge').textContent.toLowerCase().includes(selectedStatus));
+            const matchesSearch = (donorName.includes(searchTerm) || organization.includes(searchTerm));
+
+            if (matchesStatus && matchesSearch) {
+                row.style.display = ''; // Show the row
+            } else {
+                row.style.display = 'none'; // Hide the row
+            }
+        });
+    });
     </script>
 </body>
 

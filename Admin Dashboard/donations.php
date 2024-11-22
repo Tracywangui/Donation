@@ -278,17 +278,22 @@ if (!$result) {
             if (searchBox) {
                 searchBox.value = ''; // Clear search box on page load
                 searchBox.addEventListener('input', debounce(function() {
-                    const searchTerm = this.value.toLowerCase();
+                    const searchTerm = this.value.toLowerCase().trim(); // Get the search term
                     const rows = document.querySelectorAll('.donations-table tbody tr');
 
                     rows.forEach(row => {
-                        const donor = row.children[2]?.textContent.toLowerCase() || '';
-                        const email = row.children[3]?.textContent.toLowerCase() || '';
-                        const charity = row.children[5]?.textContent.toLowerCase() || '';
-                        row.style.display = 
-                            donor.includes(searchTerm) || 
-                            email.includes(searchTerm) || 
-                            charity.includes(searchTerm) ? '' : 'none';
+                        const donor = row.children[2]?.textContent.toLowerCase() || ''; // Donor Name
+                        const charity = row.children[5]?.textContent.toLowerCase() || ''; // Charity Name
+                        
+                        // Debugging: Log the values being compared
+                        console.log(`Searching for: "${searchTerm}", Donor: "${donor}", Charity: "${charity}"`);
+
+                        // Check if the row should be displayed
+                        if (donor.includes(searchTerm) || charity.includes(searchTerm)) {
+                            row.style.display = ''; // Show row
+                        } else {
+                            row.style.display = 'none'; // Hide row
+                        }
                     });
                 }, 300));
             }

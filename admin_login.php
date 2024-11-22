@@ -45,10 +45,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             header("Location: ./Admin Dashboard/admin_dashboard.php");
             exit();
         } else {
-            $error = "Invalid password";
+            $errorMessage = "Invalid password";
         }
     } else {
-        $error = "Invalid username";
+        $errorMessage = "Invalid username";
     }
 
     $stmt->close();

@@ -219,7 +219,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="auth-card">
             <div class="auth-title">Donor Login</div>
 
-            <div id="error-message" hidden>Invalid Username or Password!</div>
+            <div id="error-message" <?php echo $errorMessage ? '' : 'hidden'; ?>><?php echo $errorMessage; ?></div>
 
             <form action="donor_login.php" method="POST">
                 <div class="form-group">

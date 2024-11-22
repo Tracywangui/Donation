@@ -33,15 +33,20 @@ $sql = "SELECT d.id,
                d.amount,
                d.created_at,
                d.status,
-               d.email as donor_email,
-               d.phone as donor_phone,
+               u.firstname AS donor_firstname,
+               u.lastname AS donor_lastname,
+               u.email AS donor_email,
+               u.phoneNo AS donor_phone,
                d.reference,
                d.stripe_payment_status,
-               c.title as campaign_name
+               c.title AS campaign_name
         FROM donations d
         LEFT JOIN campaigns c ON d.campaign_id = c.id
+        LEFT JOIN donors dn ON d.donor_id = dn.user_id
+        LEFT JOIN users u ON dn.user_id = u.id
         WHERE c.charity_id = ?
         ORDER BY d.created_at DESC";
+
         
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $charityId);
@@ -54,7 +59,7 @@ if ($result->num_rows > 0) {
         $donations[] = [
             'id' => $row['id'],
             'amount' => $row['amount'],
-            'donor_name' => 'Anonymous',
+            'donor_name' => $row['donor_firstname'] . ' ' . $row['donor_lastname'],
             'created_at' => $row['created_at'],
             'status' => $row['status'],
             'campaign_title' => $row['campaign_name'] ?? 'General Donation',
@@ -64,6 +69,7 @@ if ($result->num_rows > 0) {
             'phone' => $row['donor_phone'] ?? 'N/A',
             'email' => $row['donor_email'] ?? 'N/A'
         ];
+        
     }
 }
 

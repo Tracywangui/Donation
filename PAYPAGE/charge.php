@@ -112,7 +112,7 @@ try {
         // Update statuses based on payment result
         if ($paymentIntent->status === 'succeeded') {
             // Update status to succeeded (not completed)
-            $update_sql = "UPDATE donations SET status = 'succeeded', stripe_payment_status = 'succeeded' WHERE id = ?";
+            $update_sql = "UPDATE donations SET status = 'completed', stripe_payment_status = 'succeeded' WHERE id = ?";
             $stmt = $conn->prepare($update_sql);
             $stmt->bind_param("i", $donation_id);
             $stmt->execute();

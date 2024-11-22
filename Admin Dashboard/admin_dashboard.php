@@ -296,6 +296,14 @@ $donations_per_charity_result = mysqli_query($conn, $donations_per_charity_query
                         <h3>Donations by Charity</h3>
                         <canvas id="charitiesChart" width="700" height="800"></canvas>
                     </div>
+                    <div class="chart-card">
+                        <h3>Donations by Charity (Bar Chart)</h3>
+                        <canvas id="charitiesBarChart" width="700" height="800"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Donations by Charity (Line Chart)</h3>
+                        <canvas id="charitiesLineChart" width="700" height="800"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -390,6 +398,59 @@ $donations_per_charity_result = mysqli_query($conn, $donations_per_charity_query
                         options: {
                             responsive: true,
                             maintainAspectRatio: false
+                        }
+                    });
+                }
+
+                // Charities Bar Chart
+                const charitiesBarCtx = document.getElementById('charitiesBarChart');
+                if (charitiesBarCtx) {
+                    new Chart(charitiesBarCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: <?php echo json_encode(array_column($charity_data, 'charity_name')); ?>,
+                            datasets: [{
+                                label: 'Total Donations (KSh)',
+                                data: <?php echo json_encode(array_column($charity_data, 'total_amount')); ?>,
+                                backgroundColor: 'rgba(75, 192, 192, 0.8)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Charities Line Chart
+                const charitiesLineCtx = document.getElementById('charitiesLineChart');
+                if (charitiesLineCtx) {
+                    new Chart(charitiesLineCtx, {
+                        type: 'line',
+                        data: {
+                            labels: <?php echo json_encode(array_column($charity_data, 'charity_name')); ?>,
+                            datasets: [{
+                                label: 'Total Donations (KSh)',
+                                data: <?php echo json_encode(array_column($charity_data, 'total_amount')); ?>,
+                                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                fill: false,
+                                tension: 0.1 // Adjust the tension for smoothness
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
                         }
                     });
                 }
