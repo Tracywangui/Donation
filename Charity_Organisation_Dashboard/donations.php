@@ -375,8 +375,7 @@ $conn->close();
                 <h2>Donations</h2>
                 <div class="filter-buttons">
                     <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="accepted">Accepted</button>
-                    <button class="filter-btn" data-filter="denied">Denied</button>
+                    
                 </div>
             </div>
             <div class="donations-grid" id="donationsGrid">

@@ -18,6 +18,8 @@ $sql = "SELECT t.*, c.organization_name AS charity_name
         WHERE t.donor_id = ?";
 $params = [$donor_id];
 
+// Assuming you have already fetched the transaction details
+
 // Add filter conditions
 if ($filter === 'pending') {
     $sql .= " AND status = 'pending'";

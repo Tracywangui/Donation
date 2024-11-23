@@ -14,8 +14,23 @@ $donor_id = $_SESSION['donor_id'];
 $campaign_id = $_GET['campaign_id'] ?? null;
 $charity_id = $_GET['charity_id'] ?? null;
 
-if (!$campaign_id || !$charity_id) {
-    echo "Invalid campaign or charity information.";
+if (isset($_GET['campaign_id'])) {
+    $campaign_id = intval($_GET['campaign_id']);
+
+    // Prepare the statement to check if the campaign exists
+    $stmt = $conn->prepare("SELECT * FROM campaigns WHERE id = ?");
+    $stmt->bind_param("i", $campaign_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        echo "Invalid campaign or charity information.";
+        exit();
+    }
+
+    // Proceed with the rest of your logic
+} else {
+    echo "No campaign ID provided.";
     exit();
 }
 ?>

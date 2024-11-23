@@ -175,7 +175,7 @@ $donationRequests = getDonationRequests($conn, $donorId);
                                             </button>
                                         </form>
                                     <?php elseif ($row['status'] === 'approved'): ?>
-                                        <form method="POST" action="PAYPAGE/index.php" style="display: inline;">
+                                        <form method="POST" action="../PAYPAGE/index.php?campaign_id=<?php echo $row['id']; ?>" style="display: inline;">
                                             <input type="hidden" name="request_id" value="<?php echo $row['id']; ?>">
                                             <button type="submit" class="btn donate-btn">
                                                 Donate

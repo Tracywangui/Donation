@@ -22,6 +22,16 @@ $donorUsername = $_SESSION['donorUsername']; // Now this will have the value set
     <link href="donor.css" rel="stylesheet">
     <link href="../Charity_Organisation_Dashboard/charity.css" rel="stylesheet">
     <script src="auth-check.js"></script>
+    <style>
+        .qr-code-container {
+            text-align: center;
+            margin: 20px;
+        }
+        .qr-code-container img {
+            width: 150px; /* Adjust size as needed */
+            height: 150px; /* Adjust size as needed */
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -84,6 +94,12 @@ $donorUsername = $_SESSION['donorUsername']; // Now this will have the value set
                 <p>Thank you for your continued support in making the world a better place.</p>
             </div>
         </div>
+    </div>
+
+    <div class="qr-code-container">
+        <h2>Scan to Make a Donation</h2>
+        <img src="../qr-code.png" alt="Scan Me QR Code">
+        <p>Scan the QR code to quickly access the donate page.</p>
     </div>
 
     <script>

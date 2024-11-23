@@ -38,8 +38,21 @@ if ($donors_result->num_rows > 0) {
     }
 }
 
+// Fetch all campaigns from the campaigns table
+$campaigns_query = "SELECT id, title, description FROM campaigns";
+$campaigns_result = $conn->query($campaigns_query);
+$campaigns = [];
+if ($campaigns_result->num_rows > 0) {
+    while($row = $campaigns_result->fetch_assoc()) {
+        $campaigns[] = $row;
+    }
+}
+
 // Process form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Debugging: Check the title received
+    echo "Received Title: " . htmlspecialchars($_POST['title']); // Check the title being submitted
+    $title = trim($_POST['title']);
     try {
         // Validate form data
         if (!isset($_POST['amount']) || !isset($_POST['description']) || 
@@ -49,7 +62,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $amount = filter_var($_POST['amount'], FILTER_VALIDATE_FLOAT);
         $description = trim($_POST['description']);
-        $title = trim($_POST['title']);
         $donor_id = filter_var($_POST['donor_id'], FILTER_VALIDATE_INT);
 
         // Start transaction
@@ -65,6 +77,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $insert_request->bind_param("dssis", $amount, $charityUsername, $description, $donor_id, $title);
         
         if (!$insert_request->execute()) {
+            echo "Error: " . $insert_request->error; // Check for errors
             throw new Exception("Failed to create donation request");
         }
 
@@ -162,7 +175,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 <div class="form-group">
                     <label for="title">Request Title</label>
-                    <input type="text" id="title" name="title" required>
+                    <select id="title" name="title" required onchange="fillDescription()">
+                        <option value="">Choose a campaign...</option>
+                        <?php foreach ($campaigns as $campaign): ?>
+                            <option value="<?php echo htmlspecialchars($campaign['title']); ?>" data-description="<?php echo htmlspecialchars($campaign['description']); ?>">
+                                <?php echo htmlspecialchars($campaign['title']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -193,6 +213,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 });
         }
     });
+
+    function fillDescription() {
+        const titleSelect = document.getElementById('title');
+        const descriptionTextarea = document.getElementById('description');
+        const selectedOption = titleSelect.options[titleSelect.selectedIndex];
+
+        // Fill the description textarea with the selected campaign's description
+        descriptionTextarea.value = selectedOption ? selectedOption.getAttribute('data-description') : '';
+    }
     </script>
 </body>
 </html>

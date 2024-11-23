@@ -260,7 +260,6 @@ $result = $stmt->get_result();
         align-items: center;
         gap: 8px;
     }
-
     .download-btn:hover {
         background-color: #1557b0;
     }
@@ -443,32 +442,42 @@ $result = $stmt->get_result();
                 return response.json();
             })
             .then(data => {
+                console.log(data);
                 if (data.error) {
                     throw new Error(data.error);
                 }
-                
-                currentTransactionData = data;
-                
+
+                // Assuming you want the first transaction in the array
+                const transaction = data[0]; // Access the first transaction
+
+                // Check if each property exists before accessing it
+                const date = transaction.transaction_date || 'N/A';
+                const statusClass = transaction.status ? transaction.status.toLowerCase() : 'unknown';
+                const donorEmail = transaction.donor_email || 'N/A'; // Ensure this field exists in your response
+                const paymentMethod = transaction.payment_method || 'N/A';
+                const charityName = transaction.charity_name || 'N/A';
+                const amount = transaction.amount ? `KSH ${parseFloat(transaction.amount).toFixed(2)}` : 'KSH 0.00';
+
                 detailsDiv.innerHTML = `
                     <div class="invoice-header">
                         <h2>Transaction Details</h2>
-                        <p class="invoice-number">Invoice #: INV-${data.id}</p>
+                        <p class="invoice-number">Invoice #: INV-${transaction.id || 'undefined'}</p>
                     </div>
                     <div class="invoice-details">
                         <div class="detail-row">
-                            <p><strong>Date:</strong> ${data.created_at}</p>
-                            <p><strong>Status:</strong> <span class="status-badge ${data.status.toLowerCase()}">${data.status}</span></p>
+                            <p><strong>Date:</strong> ${date}</p>
+                            <p><strong>Status:</strong> <span class="status-badge ${statusClass}">${transaction.status || 'Unknown'}</span></p>
                         </div>
                         <div class="detail-row">
-                            <p><strong>Donor Email:</strong> ${data.donor_email}</p>
-                            <p><strong>Payment Method:</strong> ${data.payment_method}</p>
+                            <p><strong>Donor Email:</strong> ${donorEmail}</p>
+                            <p><strong>Payment Method:</strong> ${paymentMethod}</p>
                         </div>
                         <div class="detail-row">
-                            <p><strong>Charity:</strong> ${data.charity_name}</p>
+                            <p><strong>Charity:</strong> ${charityName}</p>
                         </div>
                         <div class="amount-section">
                             <h3>Amount</h3>
-                            <p class="amount">KSH ${data.amount}</p>
+                            <p class="amount">${amount}</p>
                         </div>
                     </div>
                 `;
@@ -575,14 +584,15 @@ $result = $stmt->get_result();
         tbody.innerHTML = ''; // Clear existing rows
 
         data.forEach(row => {
+            const statusClass = row.status ? row.status.toLowerCase() : 'unknown'; // Check if status is defined
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="date-cell">${new Date(row.created_at).toLocaleDateString()}</td>
-                <td class="charity-cell">${row.charity_name}</td>
+                <td class="charity-cell">${row.charity_name || 'N/A'}</td>
                 <td class="amount-cell">KSH ${parseFloat(row.amount).toFixed(2)}</td>
-                <td class="payment-cell">${row.payment_method}</td>
+                <td class="payment-cell">${row.payment_method || 'N/A'}</td>
                 <td class="status-cell">
-                    <span class="status-badge ${row.status.toLowerCase()}">${row.status}</span>
+                    <span class="status-badge ${statusClass}">${row.status || 'Unknown'}</span>
                 </td>
                 <td class="action-cell">
                     <button class="view-btn" onclick="viewTransactionDetails(${row.id})">View Details</button>
@@ -657,3 +667,4 @@ $result = $stmt->get_result();
 </body>
 
 </html>
+

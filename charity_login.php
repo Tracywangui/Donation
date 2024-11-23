@@ -36,6 +36,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error = "Invalid username or not a charity account";
     }
 }
+
+// Initialize the error message variable
+$errorMessage = isset($error) ? $error : ''; // Set to the error if it exists, otherwise an empty string
 ?>
 
 

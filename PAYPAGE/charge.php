@@ -84,6 +84,16 @@ try {
     // Commit the database transaction first
     $conn->commit();
 
+    // Update campaign information after a successful donation
+    $update_campaign_sql = "UPDATE campaigns SET current_amount = current_amount + ? WHERE id = ?";
+    $stmt = $conn->prepare($update_campaign_sql);
+    $stmt->bind_param("di", $amount, $campaign_id);
+    if (!$stmt->execute()) {
+        error_log("Campaign update error: " . $stmt->error);
+        throw new Exception("Failed to update campaign information");
+    }
+    $stmt->close();
+
     $payment_success = false;
     $payment_error = '';
 
