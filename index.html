@@ -7,6 +7,16 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>DonateConnect</title>
+    <style>
+        .qr-code-container {
+            text-align: center;
+            margin: 20px;
+        }
+        .qr-code-container img {
+            width: 150px;
+            height: 150px;
+        }
+    </style>
    
 </head>
 <body>
@@ -32,6 +42,10 @@
                 <h1>Transform Lives with Your Support</h1>
                 <p>Every action counts. Be the catalyst for positive change in our global community.</p>
                 <a href="register.php" class="cta-button" id="donate-button">Join Us</a>
+                <p style="margin-top: 20px;">Scan to Make a Donation:</p>
+                <div class="qr-code-container">
+                    <img src="qr-code (5).png" alt="Scan Me to donate" id="qr-code" style="margin-top: 5px;">
+                </div>
                
             </div>
         </section>
