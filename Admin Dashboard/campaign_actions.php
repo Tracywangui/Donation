@@ -64,6 +64,7 @@ switch ($action) {
         $new_status = ($campaign['status'] === 'active') ? 'inactive' : 'active';
         
         $update_query = "UPDATE campaigns SET status = ? WHERE id = ?";
+        $sql = "UPDATE campaigns SET status = 'Inactive' WHERE id = ?";
         $stmt = mysqli_prepare($conn, $update_query);
         mysqli_stmt_bind_param($stmt, 'si', $new_status, $campaign_id);
         

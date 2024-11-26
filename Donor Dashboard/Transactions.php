@@ -442,6 +442,7 @@ $result = $stmt->get_result();
                 return response.json();
             })
             .then(data => {
+                currentTransactionData = data[0];
                 console.log(data);
                 if (data.error) {
                     throw new Error(data.error);
@@ -453,7 +454,6 @@ $result = $stmt->get_result();
                 // Check if each property exists before accessing it
                 const date = transaction.transaction_date || 'N/A';
                 const statusClass = transaction.status ? transaction.status.toLowerCase() : 'unknown';
-                const donorEmail = transaction.donor_email || 'N/A'; // Ensure this field exists in your response
                 const paymentMethod = transaction.payment_method || 'N/A';
                 const charityName = transaction.charity_name || 'N/A';
                 const amount = transaction.amount ? `KSH ${parseFloat(transaction.amount).toFixed(2)}` : 'KSH 0.00';
@@ -469,7 +469,7 @@ $result = $stmt->get_result();
                             <p><strong>Status:</strong> <span class="status-badge ${statusClass}">${transaction.status || 'Unknown'}</span></p>
                         </div>
                         <div class="detail-row">
-                            <p><strong>Donor Email:</strong> ${donorEmail}</p>
+                            
                             <p><strong>Payment Method:</strong> ${paymentMethod}</p>
                         </div>
                         <div class="detail-row">
@@ -508,7 +508,10 @@ $result = $stmt->get_result();
     }
 
     function downloadInvoice() {
-        if (!currentTransactionData) return;
+        if (!currentTransactionData) {
+            console.error("No transaction data available.");
+            return; // Ensure currentTransactionData is set
+        }
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -523,16 +526,8 @@ $result = $stmt->get_result();
         doc.text(`Invoice Number: INV-${currentTransactionData.id}`, 20, 50);
         doc.text(`Date: ${currentTransactionData.created_at}`, 20, 60);
         
-        doc.text('From:', 20, 75);
-        doc.text(currentTransactionData.donor_email, 20, 85);
-        
         doc.text('To:', 120, 75);
         doc.text(currentTransactionData.charity_name, 120, 85);
-
-        const tableData = [
-            ['Description', 'Amount'],
-            ['Donation', `KSH ${currentTransactionData.amount}`]
-        ];
 
         doc.autoTable({
             startY: 100,

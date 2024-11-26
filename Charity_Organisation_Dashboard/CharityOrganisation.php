@@ -78,7 +78,7 @@ $username = $_SESSION['charityUsername'];
         </div>
         <div class="content-area" id="contentArea">
             <!-- Content will be loaded here -->
-            <h2>Welcome to DonateConnect Dashboard</h2>
+            <h2>Welcome to the Charity Organization Dashboard</h2>
             <p>Select a menu option to get started.</p>
         </div>
     </div>

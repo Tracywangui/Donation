@@ -329,7 +329,7 @@ function registerUser($firstname, $lastname, $email, $phoneNo, $password, $role,
                             <i class="fas fa-users"></i>
                         </span>
                         <select class="form-control" name="role" required>
-                            <option value="Admin">Admin</option>
+                            
                             <option value="Charity">Charity Organisation</option>
                             <option value="Donor">Donor</option>
                         </select>

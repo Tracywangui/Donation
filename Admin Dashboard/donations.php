@@ -171,14 +171,8 @@ if (!$result) {
                     <span>Donations</span>
                 </a>
             </li>
-            
-            <li class="nav-item">
-                <a href="Charity_organisation_details.html" class="nav-link" data-page="charities">
-                    <i class="fas fa-building"></i>
-                    <span>Charities</span>
-                </a>
-            </li>
-            
+        
+
         </ul>
         <div class="logout-container">
             <button class="logout-btn" id="logoutBtn">
@@ -200,7 +194,7 @@ if (!$result) {
             <h1>Donations</h1>
 
             <div class="donation-controls">
-                <input type="text" class="search-box" placeholder="Search by donor or charity...">
+                
                 <select class="filter-select">
                     <option value="">All Statuses</option>
                     <option value="pending">Pending</option>
@@ -274,30 +268,7 @@ if (!$result) {
             }
 
             // Search functionality
-            const searchBox = document.querySelector('.search-box');
-            if (searchBox) {
-                searchBox.value = ''; // Clear search box on page load
-                searchBox.addEventListener('input', debounce(function() {
-                    const searchTerm = this.value.toLowerCase().trim(); // Get the search term
-                    const rows = document.querySelectorAll('.donations-table tbody tr');
-
-                    rows.forEach(row => {
-                        const donor = row.children[2]?.textContent.toLowerCase() || ''; // Donor Name
-                        const charity = row.children[5]?.textContent.toLowerCase() || ''; // Charity Name
-                        
-                        // Debugging: Log the values being compared
-                        console.log(`Searching for: "${searchTerm}", Donor: "${donor}", Charity: "${charity}"`);
-
-                        // Check if the row should be displayed
-                        if (donor.includes(searchTerm) || charity.includes(searchTerm)) {
-                            row.style.display = ''; // Show row
-                        } else {
-                            row.style.display = 'none'; // Hide row
-                        }
-                    });
-                }, 300));
-            }
-
+            
             // Filter functionality
             const filterSelect = document.querySelector('.filter-select');
             if (filterSelect) {

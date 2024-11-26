@@ -24,63 +24,89 @@ if ($conn->connect_error) {
 $donorUsername = $_SESSION['donorUsername'];
 
 // Function to get donor ID
+// Function to get donor ID (user ID)
 function getDonorId($conn, $username) {
-    $query = "SELECT d.id 
-              FROM donors d 
-              INNER JOIN users u ON d.user_id = u.id 
+    $query = "SELECT u.id 
+              FROM users u 
               WHERE u.username = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result->num_rows > 0) {
-        return $result->fetch_assoc()['id'];
+        return $result->fetch_assoc()['id']; // This should return the user ID
     }
     return null;
 }
 
-// Fetch donor ID
+// Fetch donor ID (user ID)
 $donorId = getDonorId($conn, $donorUsername);
 if (!$donorId) {
     echo "<p>No donor account found for the current user.</p>";
     exit();
 }
 
-// Handle form submission for accepting or rejecting requests
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $requestId = $_POST['request_id'];
-    $action = $_POST['action'];
+// Debugging output for donor ID
+echo "<p>Donor ID (User ID): " . htmlspecialchars($donorId) . "</p>";
 
-    if ($action === 'accept') {
-        $updateQuery = "UPDATE donation_requests SET status = 'approved' WHERE id = ?";
-    } elseif ($action === 'reject') {
-        $updateQuery = "UPDATE donation_requests SET status = 'rejected' WHERE id = ?";
+// Fetch donation requests
+function getDonationRequests($conn, $userId) {
+    $sql = "SELECT dr.*, u.username as charity_username 
+            FROM donation_requests dr
+            INNER JOIN users u ON dr.charity_username = u.username
+            WHERE dr.donor_id = ?"; // Use user ID here
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        die("Prepare failed: " . $conn->error); // Error handling
     }
+    
+    $stmt->bind_param("i", $userId); // Bind user ID
+    if (!$stmt->execute()) {
+        die("Execute failed: " . $stmt->error); // Error handling
+    }
+    
+    return $stmt->get_result();
+}
 
-    $updateStmt = $conn->prepare($updateQuery);
-    $updateStmt->bind_param("i", $requestId);
-    if ($updateStmt->execute()) {
-        echo "<script>alert('Request updated successfully!');</script>";
-    } else {
-        echo "<script>alert('Error updating request.');</script>";
+// Check if form is submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action']) && isset($_POST['request_id'])) {
+        $action = $_POST['action'];
+        $requestId = $_POST['request_id'];
+
+        // Handle the action (accept or reject)
+        if ($action === 'accept') {
+            // Code to accept the request
+            $sql = "UPDATE donation_requests SET status = 'approved' WHERE id = ?";
+        } elseif ($action === 'reject') {
+            // Code to reject the request
+            $sql = "UPDATE donation_requests SET status = 'rejected' WHERE id = ?";
+        }
+
+        // Prepare and execute the statement
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $requestId);
+        if ($stmt->execute()) {
+            echo "<p>Request successfully updated.</p>";
+        } else {
+            echo "<p>Error updating request: " . $stmt->error . "</p>";
+        }
     }
 }
 
 // Fetch donation requests
-function getDonationRequests($conn, $donorId) {
-    $sql = "SELECT dr.*, u.username as charity_username 
-            FROM donation_requests dr
-            INNER JOIN users u ON dr.charity_username = u.username
-            WHERE dr.donor_id = ?";
+$donationRequests = getDonationRequests($conn, $donorId);
 
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $donorId);
-    $stmt->execute();
-    return $stmt->get_result();
+// Debugging output for donation requests
+if ($donationRequests && $donationRequests->num_rows > 0) {
+    echo "<p>Donation requests found: " . $donationRequests->num_rows . "</p>";
+} else {
+    echo "<p>No donation requests found for this donor (User ID: " . htmlspecialchars($donorId) . ").</p>";
 }
 
-// Fetch data
-$donationRequests = getDonationRequests($conn, $donorId);
+// ... existing code ...
+// ... existing code ...
 ?>
 <!DOCTYPE html>
 <html lang="en">

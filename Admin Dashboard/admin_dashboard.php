@@ -292,10 +292,7 @@ $donations_per_charity_result = mysqli_query($conn, $donations_per_charity_query
                         <h3>Top Campaigns</h3>
                         <canvas id="campaignsChart" width="700" height="800"></canvas>
                     </div>
-                    <div class="chart-card">
-                        <h3>Donations by Charity</h3>
-                        <canvas id="charitiesChart" width="700" height="800"></canvas>
-                    </div>
+                    
                     <div class="chart-card">
                         <h3>Donations by Charity (Bar Chart)</h3>
                         <canvas id="charitiesBarChart" width="700" height="800"></canvas>
@@ -378,29 +375,7 @@ $donations_per_charity_result = mysqli_query($conn, $donations_per_charity_query
                 }
 
                 // Charities Chart
-                const charitiesCtx = document.getElementById('charitiesChart');
-                if (charitiesCtx) {
-                    new Chart(charitiesCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: <?php echo json_encode(array_column($charity_data, 'charity_name')); ?>,
-                            datasets: [{
-                                data: <?php echo json_encode(array_column($charity_data, 'total_amount')); ?>,
-                                backgroundColor: [
-                                    'rgba(255, 159, 64, 0.8)',
-                                    'rgba(75, 192, 192, 0.8)',
-                                    'rgba(54, 162, 235, 0.8)',
-                                    'rgba(153, 102, 255, 0.8)',
-                                    'rgba(255, 99, 132, 0.8)'
-                                ]
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false
-                        }
-                    });
-                }
+                
 
                 // Charities Bar Chart
                 const charitiesBarCtx = document.getElementById('charitiesBarChart');
